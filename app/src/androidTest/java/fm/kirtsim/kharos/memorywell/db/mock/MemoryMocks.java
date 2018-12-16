@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db;
+package fm.kirtsim.kharos.memorywell.db.mock;
 
 import com.google.common.collect.Lists;
 
@@ -6,7 +6,7 @@ import java.util.List;
 
 import fm.kirtsim.kharos.memorywell.db.entity.Memory;
 
-final class MemoryMocks {
+public final class MemoryMocks {
 
     private static final List<Memory> memories = Lists.newArrayList(
             new Memory(1, "Memory 1", "Comment 1", 1, "path/im1"),
@@ -42,7 +42,7 @@ final class MemoryMocks {
         return mocks;
     }
 
-    static List<Memory> memoriesWithinTimeRange(long from, long to) {
+    public static List<Memory> memoriesWithinTimeRange(long from, long to) {
         final List<Memory> mocks = Lists.newArrayList();
         for (Memory memory : memories)
             if (memory.id <= to && memory.id >= from)

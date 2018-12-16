@@ -1,8 +1,6 @@
-package fm.kirtsim.kharos.memorywell.db;
+package fm.kirtsim.kharos.memorywell.db.entity;
 
 import java.util.List;
-
-import fm.kirtsim.kharos.memorywell.db.entity.Memory;
 
 public class MemoryList {
 

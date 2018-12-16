@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db;
+package fm.kirtsim.kharos.memorywell.db.util;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public final class LiveDataTestUtil {
 
-    static final <V> V getValue(LiveData<V> liveData) {
+    public static final <V> V getValue(LiveData<V> liveData) {
         final Object[] value = new Object[1];
 
         final CountDownLatch latch = new CountDownLatch(1);

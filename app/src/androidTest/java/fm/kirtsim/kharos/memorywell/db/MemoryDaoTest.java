@@ -1,7 +1,6 @@
 package fm.kirtsim.kharos.memorywell.db;
 
 import android.arch.core.executor.testing.InstantTaskExecutorRule;
-import android.arch.persistence.db.SupportSQLiteDatabase;
 import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -16,17 +15,16 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
-import java.lang.reflect.Method;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 
-import fm.kirtsim.kharos.memorywell.BuildConfig;
 import fm.kirtsim.kharos.memorywell.db.dao.MemoryDao;
 import fm.kirtsim.kharos.memorywell.db.entity.Memory;
 
-import static fm.kirtsim.kharos.memorywell.db.LiveDataTestUtil.getValue;
-import static fm.kirtsim.kharos.memorywell.db.MemoryMocks.getMockMemories;
+import static fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks.getMockMemories;
+import static fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks.memoriesWithinTimeRange;
+import static fm.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -78,7 +76,8 @@ public class MemoryDaoTest {
         List<Long> ids = memoryDao.insert(forInsertion);
         List<Memory> expected = forInsertion.subList(0, 2);
 
-        List<Memory> inserted = Lists.transform(ids.subList(0,2), this::createMemoryWithId);
+        List<Memory> inserted = ids.stream().filter(id -> id > -1)
+                .map(this::createMemoryWithId).collect(toList());
 
         assertMemoryListsEqual(expected, inserted);
     }
@@ -135,7 +134,7 @@ public class MemoryDaoTest {
     @Test
     public void selectByTimeRange_selectSingle_test() {
         final long from = 2, to = 2;
-        List<Memory> expected = MemoryMocks.memoriesWithinTimeRange(from, to);
+        List<Memory> expected = memoriesWithinTimeRange(from, to);
         List<Memory> selected = getValue(memoryDao.selectByTimeRange(from, to));
 
         assertMemoryListsEqual(expected, selected);
@@ -146,15 +145,6 @@ public class MemoryDaoTest {
         List<Memory> retMemories = getValue(memoryDao.selectByTimeRange(3, 1));
 
         assertMemoryListsEqual(Lists.newArrayList(), retMemories);
-    }
-
-    private void insertMemoriesWithIds(long ... ids) {
-        List<Memory> memories = Lists.newArrayList();
-        for (long id : ids) {
-            memories.add(createMemoryWithId(id));
-        }
-        if (!memories.isEmpty())
-            memoryDao.insert(memories);
     }
 
     private Memory createMemoryWithId(long id) {
@@ -174,22 +164,5 @@ public class MemoryDaoTest {
         expected.sort(sortComparator);
         for (int i = 0; i < expected.size(); ++i)
             assertEquals(LIST_ITEM_MISMATCH, expected.get(i), actual.get(i));
-    }
-
-
-    public static void setInMemoryRoomDatabases(SupportSQLiteDatabase... database) {
-        if (BuildConfig.DEBUG) {
-            try {
-                Class<?> debugDB = Class.forName("com.amitshekhar.DebugDB");
-                Class[] argTypes = new Class[]{HashMap.class};
-                HashMap<String, SupportSQLiteDatabase> inMemoryDatabases = new HashMap<>();
-                // set your inMemory databases
-                inMemoryDatabases.put("InMemoryOne.db", database[0]);
-                Method setRoomInMemoryDatabase = debugDB.getMethod("setInMemoryRoomDatabases", argTypes);
-                setRoomInMemoryDatabase.invoke(null, inMemoryDatabases);
-            } catch (Exception ignore) {
-
-            }
-        }
     }
 }
