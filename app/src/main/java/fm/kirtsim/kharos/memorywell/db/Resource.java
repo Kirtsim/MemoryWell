@@ -12,6 +12,18 @@ public class Resource<Data> {
         this.message = message;
     }
 
+    public Status status() {
+        return status;
+    }
+
+    public Data data() {
+        return data;
+    }
+
+    public String message() {
+        return message;
+    }
+
     public static <Data> Resource<Data> success(Data data) {
         return new Resource<>(Status.SUCCESS, data, "");
     }
