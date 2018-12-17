@@ -26,7 +26,7 @@ public final class TagMocks {
         return tags.size();
     }
 
-    public static List<Tag> getMocks() {
+    public static List<Tag> getMockTags() {
         final List<Tag> mocks = Lists.newArrayList();
         for (Tag tag : tags)
             mocks.add(new Tag(tag));

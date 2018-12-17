@@ -41,7 +41,7 @@ public final class TagDaoTest {
         db = Room.inMemoryDatabaseBuilder(context, MemoryDatabase.class).build();
         tagDao = db.tagDao();
 
-        tagDao.insert(TagMocks.getMocks());
+        tagDao.insert(TagMocks.getMockTags());
     }
 
     @After
@@ -63,7 +63,7 @@ public final class TagDaoTest {
 
     @Test
     public void insert_nameDuplicateIgnored_test() {
-        Tag duplicateTag = new Tag(100, TagMocks.getMocks().get(0).name);
+        Tag duplicateTag = new Tag(100, TagMocks.getMockTags().get(0).name);
         List<Tag> toInsert = Lists.newArrayList(duplicateTag, new Tag(200, "new name"));
         List<Tag> expected = new ArrayList<>(toInsert.subList(1, 2));
         expected.forEach(tag -> tag.name = "");
@@ -79,19 +79,19 @@ public final class TagDaoTest {
     public void selectAll_test() {
         List<Tag> selected = getValue(tagDao.selectAll());
 
-        assertTagListsEqual(TagMocks.getMocks(), selected);
+        assertTagListsEqual(TagMocks.getMockTags(), selected);
     }
 
     @Test
     public void selectAll_emptyDb() {
-        tagDao.delete(TagMocks.getMocks());
+        tagDao.delete(TagMocks.getMockTags());
         List<Tag> selected = getValue(tagDao.selectAll());
         assertTagListsEqual(Lists.newArrayList(), selected);
     }
 
     @Test
     public void selectByIds_test() {
-        List<Tag> expected = TagMocks.getMocks().subList(3, 6);
+        List<Tag> expected = TagMocks.getMockTags().subList(3, 6);
         List<Tag> selected = getValue(tagDao.selectByIds(expected.stream()
                 .map(tag -> tag.id).collect(toList())));
 
@@ -100,7 +100,7 @@ public final class TagDaoTest {
 
     @Test
     public void selectByIds_missingTags_test() {
-        List<Tag> expected = TagMocks.getMocks().subList(3, 6);
+        List<Tag> expected = TagMocks.getMockTags().subList(3, 6);
         List<Long> ids = expected.stream().map(tag -> tag.id).collect(toList());
         ids.add(310L);
         ids.add(311L);
@@ -114,7 +114,7 @@ public final class TagDaoTest {
 
     @Test
     public void selectByNames_test() {
-        List<Tag> expected = TagMocks.getMocks().subList(5, 10);
+        List<Tag> expected = TagMocks.getMockTags().subList(5, 10);
         List<String> names = expected.stream().map(tag -> tag.name.toLowerCase()).collect(toList());
 
         List<Tag> selected = getValue(tagDao.selectByNames(names));
@@ -124,7 +124,7 @@ public final class TagDaoTest {
 
     @Test
     public void selectByNames_missingTags_test() {
-        List<Tag> expected = TagMocks.getMocks().subList(5, 10);
+        List<Tag> expected = TagMocks.getMockTags().subList(5, 10);
         List<String> names = expected.stream().map(tag -> tag.name.toLowerCase()).collect(toList());
         names.add("NO_TAG_NAME");
         names.add("EMAN_GAT_ON");
@@ -145,7 +145,7 @@ public final class TagDaoTest {
 
     @Test
     public void selectByNamesCaseSensitive_test() {
-        List<Tag> expected = TagMocks.getMocks();
+        List<Tag> expected = TagMocks.getMockTags();
         List<String> names = expected.stream().map(tag -> tag.name).collect(toList());
 
         List<Tag> selected = getValue(tagDao.selectByNamesCaseSensitive(names));
