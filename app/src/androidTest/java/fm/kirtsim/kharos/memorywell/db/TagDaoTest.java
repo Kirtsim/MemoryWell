@@ -1,7 +1,5 @@
 package fm.kirtsim.kharos.memorywell.db;
 
-import android.arch.persistence.room.Room;
-import android.content.Context;
 import android.database.sqlite.SQLiteConstraintException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -16,13 +14,17 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 
+import fm.kirtsim.kharos.memorywell.AssertUtil;
+import fm.kirtsim.kharos.memorywell.DbUtil;
 import fm.kirtsim.kharos.memorywell.db.dao.TagDao;
 import fm.kirtsim.kharos.memorywell.db.entity.Tag;
 import fm.kirtsim.kharos.memorywell.db.entity.Tagging;
-import fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks;
 import fm.kirtsim.kharos.memorywell.db.mock.TagMocks;
 import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
 
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_DELETE_COUNT;
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_UPDATE_COUNT;
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_NO_EXCEPTION;
 import static fm.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
@@ -32,26 +34,13 @@ import static org.junit.Assert.fail;
 @RunWith(AndroidJUnit4.class)
 public final class TagDaoTest {
 
-    private static final String ERR_NULL = "Null was returned.";
-    private static final String ERR_SIZE = "Lists do not match in size.";
-    private static final String ERR_LIST_ITEM = "The list item does't match.";
-    private static final String ERR_UPDATE_COUNT = "The count of updated items is incorrect: ";
-    private static final String ERR_DELETE_COUNT = "The count of deleted items is incorrect: ";
-    private static final String ERR_EXCEPTION = "An exception was expected to be thrown.";
-
     private MemoryDatabase db;
     private TagDao tagDao;
 
     @Before
     public void initBeforeEach() {
-        final Context context = InstrumentationRegistry.getContext();
-        db = Room.inMemoryDatabaseBuilder(context, MemoryDatabase.class).build();
+        db = DbUtil.setupDatabase(InstrumentationRegistry.getContext());
         tagDao = db.tagDao();
-
-        tagDao.insert(TagMocks.getMockTags());
-        db.memoryDao().insert(MemoryMocks.getMockMemories());
-        for (Tagging tagging : TaggingMocks.getMockTaggings())
-            db.taggingDao().insert(tagging);
     }
 
     @After
@@ -210,7 +199,7 @@ public final class TagDaoTest {
         int updateCount = tagDao.update(updated);
         List<Tag> newSelected = getValue(tagDao.selectAll());
 
-        assertEquals(ERR_UPDATE_COUNT, updated.size(), updateCount);
+        assertEquals(ERR_DB_UPDATE_COUNT, updated.size(), updateCount);
         assertTagListsEqual(expected, newSelected);
     }
 
@@ -223,7 +212,7 @@ public final class TagDaoTest {
         int updateCount = tagDao.update(updated);
         List<Tag> newSelected = getValue(tagDao.selectAll());
 
-        assertEquals(ERR_UPDATE_COUNT,1, updateCount);
+        assertEquals(ERR_DB_UPDATE_COUNT,1, updateCount);
         assertTagListsEqual(expected, newSelected);
     }
 
@@ -235,7 +224,7 @@ public final class TagDaoTest {
         int updateCount = tagDao.update(updated);
         List<Tag> newSelected = getValue(tagDao.selectAll());
 
-        assertEquals(ERR_UPDATE_COUNT, 1, updateCount);
+        assertEquals(ERR_DB_UPDATE_COUNT, 1, updateCount);
         assertTagListsEqual(expected, newSelected);
     }
 
@@ -249,7 +238,7 @@ public final class TagDaoTest {
         int deleteCount = tagDao.delete(toDelete);
         List<Tag> remaining = getValue(tagDao.selectAll());
 
-        assertEquals(ERR_DELETE_COUNT, toDelete.size(), deleteCount);
+        assertEquals(ERR_DB_DELETE_COUNT, toDelete.size(), deleteCount);
         assertTagListsEqual(expected, remaining);
     }
 
@@ -264,7 +253,7 @@ public final class TagDaoTest {
         int deleteCount = tagDao.delete(toDelete);
         List<Tag> remaining = getValue(tagDao.selectAll());
 
-        assertEquals(ERR_DELETE_COUNT, toDelete.size(), deleteCount);
+        assertEquals(ERR_DB_DELETE_COUNT, toDelete.size(), deleteCount);
         assertTagListsEqual(expected, remaining);
     }
 
@@ -284,7 +273,7 @@ public final class TagDaoTest {
 
         try {
             tagDao.delete(toDelete);
-            fail(ERR_EXCEPTION);
+            fail(ERR_NO_EXCEPTION);
         } catch (SQLiteConstraintException ignored) {}
         List<Tag> remaining = getValue(tagDao.selectAll());
 
@@ -292,14 +281,8 @@ public final class TagDaoTest {
     }
 
     private void assertTagListsEqual(List<Tag> expected, List<Tag> actual) {
-        assertNotNull(ERR_NULL, actual);
-        assertEquals(ERR_SIZE, expected.size(), actual.size());
-
-        expected.sort((tag1, tag2) -> Long.compare(tag1.id, tag2.id));
-        actual.sort((tag1, tag2) -> Long.compare(tag1.id, tag2.id));
-        for (int i = 0; i < expected.size(); ++i)
-            assertEquals(ERR_LIST_ITEM, expected.get(i), actual.get(i));
-
+        AssertUtil.assertListsEquals(expected, actual,
+                (tag1, tag2) -> Long.compare(tag1.id, tag2.id));
     }
 
 }

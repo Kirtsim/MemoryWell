@@ -1,8 +1,6 @@
 package fm.kirtsim.kharos.memorywell.db;
 
 import android.arch.core.executor.testing.InstantTaskExecutorRule;
-import android.arch.persistence.room.Room;
-import android.content.Context;
 import android.database.sqlite.SQLiteConstraintException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -16,51 +14,35 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
-import java.util.Comparator;
 import java.util.List;
 
+import fm.kirtsim.kharos.memorywell.AssertUtil;
+import fm.kirtsim.kharos.memorywell.DbUtil;
 import fm.kirtsim.kharos.memorywell.db.dao.MemoryDao;
 import fm.kirtsim.kharos.memorywell.db.entity.Memory;
-import fm.kirtsim.kharos.memorywell.db.entity.Tagging;
-import fm.kirtsim.kharos.memorywell.db.mock.TagMocks;
 import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
 
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_DELETE_COUNT;
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_UPDATE_COUNT;
 import static fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks.getMockMemories;
 import static fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks.memoriesWithinTimeRange;
 import static fm.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 @RunWith(AndroidJUnit4.class)
 public class MemoryDaoTest {
 
-    private static final String NULL_ERROR = "Null value was returned.";
-    private static final String SIZE_ERROR = "Size mismatch.";
-    private static final String LIST_ITEM_MISMATCH = "List item mismatch.";
-    private static final String DELETE_ERROR = "The number of deleted items is incorrect: ";
-
-    private static final Comparator<Memory> idComparator = (m1, m2) -> Long.compare(m1.id, m2.id);
-    private static final Comparator<Memory> titleComparator = (m1, m2) -> m1.title.compareTo(m2.title);
-
-    private MemoryDao memoryDao;
     private MemoryDatabase db;
+    private MemoryDao memoryDao;
 
     @Rule
     public TestRule rule = new InstantTaskExecutorRule();
 
     @Before
     public void initializeBeforeEach() {
-        Context context = InstrumentationRegistry.getContext();
-        db = Room.inMemoryDatabaseBuilder(context, MemoryDatabase.class)
-                .allowMainThreadQueries()
-                .build();
+        db = DbUtil.setupDatabase(InstrumentationRegistry.getContext());
         memoryDao = db.memoryDao();
-        memoryDao.insert(getMockMemories());
-
-        db.tagDao().insert(TagMocks.getMockTags());
-        for (Tagging tagging : TaggingMocks.getMockTaggings())
-            db.taggingDao().insert(tagging);
     }
 
     @After
@@ -96,7 +78,6 @@ public class MemoryDaoTest {
         List<Memory> selected = getValue(memoryDao.selectAll());
 
         assertMemoryListsEqual(getMockMemories(), selected);
-
     }
 
     @Test
@@ -169,7 +150,7 @@ public class MemoryDaoTest {
         int updateCount = memoryDao.update(Lists.newArrayList(updated));
         List<Memory> selected = getValue(memoryDao.selectAll());
 
-        assertEquals(1, updateCount);
+        assertEquals(ERR_DB_UPDATE_COUNT,1, updateCount);
         assertMemoryListsEqual(expected, selected);
     }
 
@@ -181,7 +162,7 @@ public class MemoryDaoTest {
         int updateCount = memoryDao.update(Lists.newArrayList(toUpdate));
         List<Memory> selected = getValue(memoryDao.selectAll());
 
-        assertEquals(0, updateCount);
+        assertEquals(ERR_DB_UPDATE_COUNT,0, updateCount);
         assertMemoryListsEqual(expected, selected);
     }
 
@@ -193,7 +174,7 @@ public class MemoryDaoTest {
         int updateCount = memoryDao.update(Lists.newArrayList(toUpdate));
         List<Memory> selected = getValue(memoryDao.selectAll());
 
-        assertEquals(1, updateCount);
+        assertEquals(ERR_DB_UPDATE_COUNT, 1, updateCount);
         assertMemoryListsEqual(expected, selected);
     }
 
@@ -209,7 +190,7 @@ public class MemoryDaoTest {
         int deleteCount = memoryDao.delete(toDelete);
         List<Memory> remaining = getValue(memoryDao.selectAll());
 
-        assertEquals(DELETE_ERROR,1, deleteCount);
+        assertEquals(ERR_DB_DELETE_COUNT,1, deleteCount);
         assertMemoryListsEqual(expected, remaining);
     }
 
@@ -226,7 +207,7 @@ public class MemoryDaoTest {
         int deleteCount = memoryDao.delete(toDelete);
         List<Memory> remaining = getValue(memoryDao.selectAll());
 
-        assertEquals(DELETE_ERROR,1, deleteCount);
+        assertEquals(ERR_DB_DELETE_COUNT,1, deleteCount);
         assertMemoryListsEqual(expected, remaining);
     }
 
@@ -247,15 +228,6 @@ public class MemoryDaoTest {
     }
 
     private void assertMemoryListsEqual(List<Memory> expected, List<Memory> actual) {
-        assertMemoryListsEqual(expected, actual, idComparator);
-    }
-
-    private void assertMemoryListsEqual(List<Memory> expected, List<Memory> actual,
-                                        Comparator<Memory> sortComparator) {
-        assertNotNull(NULL_ERROR, actual);
-        assertEquals(SIZE_ERROR, expected.size(), actual.size());
-        expected.sort(sortComparator);
-        for (int i = 0; i < expected.size(); ++i)
-            assertEquals(LIST_ITEM_MISMATCH, expected.get(i), actual.get(i));
+        AssertUtil.assertListsEquals(expected, actual, (m1, m2) -> Long.compare(m1.id, m2.id));
     }
 }
