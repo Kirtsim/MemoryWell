@@ -2,6 +2,7 @@ package fm.kirtsim.kharos.memorywell.db;
 
 import android.arch.persistence.room.Room;
 import android.content.Context;
+import android.database.sqlite.SQLiteConstraintException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -17,12 +18,16 @@ import java.util.List;
 
 import fm.kirtsim.kharos.memorywell.db.dao.TagDao;
 import fm.kirtsim.kharos.memorywell.db.entity.Tag;
+import fm.kirtsim.kharos.memorywell.db.entity.Tagging;
+import fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks;
 import fm.kirtsim.kharos.memorywell.db.mock.TagMocks;
+import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
 
 import static fm.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 public final class TagDaoTest {
@@ -30,7 +35,9 @@ public final class TagDaoTest {
     private static final String ERR_NULL = "Null was returned.";
     private static final String ERR_SIZE = "Lists do not match in size.";
     private static final String ERR_LIST_ITEM = "The list item does't match.";
-
+    private static final String ERR_UPDATE_COUNT = "The count of updated items is incorrect: ";
+    private static final String ERR_DELETE_COUNT = "The count of deleted items is incorrect: ";
+    private static final String ERR_EXCEPTION = "An exception was expected to be thrown.";
 
     private MemoryDatabase db;
     private TagDao tagDao;
@@ -42,6 +49,9 @@ public final class TagDaoTest {
         tagDao = db.tagDao();
 
         tagDao.insert(TagMocks.getMockTags());
+        db.memoryDao().insert(MemoryMocks.getMockMemories());
+        for (Tagging tagging : TaggingMocks.getMockTaggings())
+            db.taggingDao().insert(tagging);
     }
 
     @After
@@ -84,6 +94,7 @@ public final class TagDaoTest {
 
     @Test
     public void selectAll_emptyDb() {
+        db.taggingDao().delete(TaggingMocks.getMockTaggings());
         tagDao.delete(TagMocks.getMockTags());
         List<Tag> selected = getValue(tagDao.selectAll());
         assertTagListsEqual(Lists.newArrayList(), selected);
@@ -187,6 +198,97 @@ public final class TagDaoTest {
     public void selectTagsWithNameStarting_noMatch_test() {
         List<Tag> selected = getValue(tagDao.selectTagsWithNamesStarting(TagMocks.missingTagPrefix()));
         assertTagListsEqual(Lists.newArrayList(), selected);
+    }
+
+    @Test
+    public void update_test() {
+        List<Tag> expected = TagMocks.getMockTags();
+        List<Tag> updated = expected.subList(0, 2);
+        updated.get(0).name = "new_name_1";
+        updated.get(1).name = "new_name_2";
+
+        int updateCount = tagDao.update(updated);
+        List<Tag> newSelected = getValue(tagDao.selectAll());
+
+        assertEquals(ERR_UPDATE_COUNT, updated.size(), updateCount);
+        assertTagListsEqual(expected, newSelected);
+    }
+
+    @Test
+    public void update_oneNotExisting_test() {
+        List<Tag> expected = TagMocks.getMockTags();
+        List<Tag> updated = Lists.newArrayList(expected.get(0), new Tag(10001, "blah_1"));
+        updated.get(0).name = "new_name_1";
+
+        int updateCount = tagDao.update(updated);
+        List<Tag> newSelected = getValue(tagDao.selectAll());
+
+        assertEquals(ERR_UPDATE_COUNT,1, updateCount);
+        assertTagListsEqual(expected, newSelected);
+    }
+
+    @Test
+    public void update_noChanges_test() {
+        List<Tag> expected = TagMocks.getMockTags();
+        List<Tag> updated = Lists.newArrayList(expected.get(0));
+
+        int updateCount = tagDao.update(updated);
+        List<Tag> newSelected = getValue(tagDao.selectAll());
+
+        assertEquals(ERR_UPDATE_COUNT, 1, updateCount);
+        assertTagListsEqual(expected, newSelected);
+    }
+
+    @Test
+    public void delete_test() {
+        List<Long> unboundTagIds = TaggingMocks.getUnboundTagIds().stream().limit(2).collect(toList());
+        List<Tag> allTags = TagMocks.getMockTags();
+        List<Tag> expected = allTags.stream().filter(t -> !unboundTagIds.contains(t.id)).collect(toList());
+        List<Tag> toDelete = allTags.stream().filter(t -> unboundTagIds.contains(t.id)).collect(toList());
+
+        int deleteCount = tagDao.delete(toDelete);
+        List<Tag> remaining = getValue(tagDao.selectAll());
+
+        assertEquals(ERR_DELETE_COUNT, toDelete.size(), deleteCount);
+        assertTagListsEqual(expected, remaining);
+    }
+
+    @Test
+    public void delete_onlyIdMatch_test() {
+        long unboundTagId = TaggingMocks.getUnboundTagIds().get(0);
+        List<Tag> allTags = TagMocks.getMockTags();
+        List<Tag> expected = allTags.stream().filter(t -> t.id != unboundTagId).collect(toList());
+        List<Tag> toDelete = allTags.stream().filter(t -> unboundTagId == t.id).collect(toList());
+        toDelete.get(0).name = "different_name";
+
+        int deleteCount = tagDao.delete(toDelete);
+        List<Tag> remaining = getValue(tagDao.selectAll());
+
+        assertEquals(ERR_DELETE_COUNT, toDelete.size(), deleteCount);
+        assertTagListsEqual(expected, remaining);
+    }
+
+    @Test
+    public void delete_boundTagInTagging_boundGoesFirst_deleteNothing_test() {
+        final long boundTagId = 2;
+        db.taggingDao().delete(TaggingMocks.getMockTaggings());
+        db.taggingDao().insert(new Tagging(2,boundTagId));
+
+
+        List<Tag> expected = TagMocks.getMockTags();
+        Tag notBound = expected.stream().filter(tag -> tag.id == 1).findFirst().get();;
+        Tag bound = expected.stream().filter(tag -> tag.id == 2).findFirst().get();
+        assertNotNull(bound);
+        assertNotNull(notBound);
+        List<Tag> toDelete = Lists.newArrayList(notBound, bound);
+
+        try {
+            tagDao.delete(toDelete);
+            fail(ERR_EXCEPTION);
+        } catch (SQLiteConstraintException ignored) {}
+        List<Tag> remaining = getValue(tagDao.selectAll());
+
+        assertTagListsEqual(expected, remaining);
     }
 
     private void assertTagListsEqual(List<Tag> expected, List<Tag> actual) {

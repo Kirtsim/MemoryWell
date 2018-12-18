@@ -19,10 +19,10 @@ public interface TagDao {
     List<Long> insert(List<Tag> tags);
 
     @Delete
-    void delete(List<Tag> tags);
+    int delete(List<Tag> tags);
 
     @Update
-    void update(List<Tag> tags);
+    int update(List<Tag> tags);
 
     @Query("select * from Tag")
     LiveData<List<Tag>> selectAll();

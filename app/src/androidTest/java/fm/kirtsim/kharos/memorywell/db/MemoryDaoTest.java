@@ -3,6 +3,7 @@ package fm.kirtsim.kharos.memorywell.db;
 import android.arch.core.executor.testing.InstantTaskExecutorRule;
 import android.arch.persistence.room.Room;
 import android.content.Context;
+import android.database.sqlite.SQLiteConstraintException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -20,6 +21,9 @@ import java.util.List;
 
 import fm.kirtsim.kharos.memorywell.db.dao.MemoryDao;
 import fm.kirtsim.kharos.memorywell.db.entity.Memory;
+import fm.kirtsim.kharos.memorywell.db.entity.Tagging;
+import fm.kirtsim.kharos.memorywell.db.mock.TagMocks;
+import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
 
 import static fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks.getMockMemories;
 import static fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks.memoriesWithinTimeRange;
@@ -34,6 +38,7 @@ public class MemoryDaoTest {
     private static final String NULL_ERROR = "Null value was returned.";
     private static final String SIZE_ERROR = "Size mismatch.";
     private static final String LIST_ITEM_MISMATCH = "List item mismatch.";
+    private static final String DELETE_ERROR = "The number of deleted items is incorrect: ";
 
     private static final Comparator<Memory> idComparator = (m1, m2) -> Long.compare(m1.id, m2.id);
     private static final Comparator<Memory> titleComparator = (m1, m2) -> m1.title.compareTo(m2.title);
@@ -52,6 +57,10 @@ public class MemoryDaoTest {
                 .build();
         memoryDao = db.memoryDao();
         memoryDao.insert(getMockMemories());
+
+        db.tagDao().insert(TagMocks.getMockTags());
+        for (Tagging tagging : TaggingMocks.getMockTaggings())
+            db.taggingDao().insert(tagging);
     }
 
     @After
@@ -92,6 +101,7 @@ public class MemoryDaoTest {
 
     @Test
     public void selectAll_emptyDb_test() {
+        db.taggingDao().delete(TaggingMocks.getMockTaggings());
         memoryDao.delete(getMockMemories());
         List<Memory> selected = getValue(memoryDao.selectAll());
 
@@ -145,6 +155,89 @@ public class MemoryDaoTest {
         List<Memory> retMemories = getValue(memoryDao.selectByTimeRange(3, 1));
 
         assertMemoryListsEqual(Lists.newArrayList(), retMemories);
+    }
+
+    @Test
+    public void update_test() {
+        List<Memory> expected = getMockMemories();
+        Memory updated = expected.get(5);
+        updated.comment = "updated comment";
+        updated.dateTime = 1001;
+        updated.imagePath = "new/image/path";
+        updated.title = "updated title";
+
+        int updateCount = memoryDao.update(Lists.newArrayList(updated));
+        List<Memory> selected = getValue(memoryDao.selectAll());
+
+        assertEquals(1, updateCount);
+        assertMemoryListsEqual(expected, selected);
+    }
+
+    @Test
+    public void update_notExistingId_test() {
+        List<Memory> expected = getMockMemories();
+        List<Memory> toUpdate = Lists.newArrayList(new Memory(100001, "a", "b", 1, ""));
+
+        int updateCount = memoryDao.update(Lists.newArrayList(toUpdate));
+        List<Memory> selected = getValue(memoryDao.selectAll());
+
+        assertEquals(0, updateCount);
+        assertMemoryListsEqual(expected, selected);
+    }
+
+    @Test
+    public void update_noChanges_test() {
+        List<Memory> expected = getMockMemories();
+        List<Memory> toUpdate = expected.subList(0, 1);
+
+        int updateCount = memoryDao.update(Lists.newArrayList(toUpdate));
+        List<Memory> selected = getValue(memoryDao.selectAll());
+
+        assertEquals(1, updateCount);
+        assertMemoryListsEqual(expected, selected);
+    }
+
+    @Test
+    public void delete_test() {
+        long unboundMemoryId = TaggingMocks.getUnboundMemoryIds().get(0);
+        List<Memory> originalMemories = getMockMemories();
+        List<Memory> expected = originalMemories.stream()
+                .filter(m -> m.id != unboundMemoryId).collect(toList());
+        List<Memory> toDelete = originalMemories.stream()
+                .filter(m -> m.id == unboundMemoryId).collect(toList());
+
+        int deleteCount = memoryDao.delete(toDelete);
+        List<Memory> remaining = getValue(memoryDao.selectAll());
+
+        assertEquals(DELETE_ERROR,1, deleteCount);
+        assertMemoryListsEqual(expected, remaining);
+    }
+
+    @Test
+    public void delete_idMatchOnly_test() {
+        long unboundMemoryId = TaggingMocks.getUnboundMemoryIds().get(0);
+        List<Memory> originalMemories = getMockMemories();
+        List<Memory> expected = originalMemories.stream()
+                .filter(m -> m.id != unboundMemoryId).collect(toList());
+        List<Memory> toDelete = originalMemories.stream()
+                .filter(m -> m.id == unboundMemoryId).collect(toList());
+        toDelete.get(0).title = "DO NOT MATCH THE TITLE!";
+
+        int deleteCount = memoryDao.delete(toDelete);
+        List<Memory> remaining = getValue(memoryDao.selectAll());
+
+        assertEquals(DELETE_ERROR,1, deleteCount);
+        assertMemoryListsEqual(expected, remaining);
+    }
+
+    @Test(expected = SQLiteConstraintException.class)
+    public void delete_boundMemoryByTagging_test() {
+        long boundMemoryId = TaggingMocks.getBoundMemoryIds().get(0);
+        List<Memory> expected = getMockMemories();
+        List<Memory> toDelete = getMockMemories().stream()
+                .filter(m -> m.id == boundMemoryId).collect(toList());
+
+        memoryDao.delete(toDelete);
     }
 
     private Memory createMemoryWithId(long id) {
