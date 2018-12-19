@@ -1,7 +1,5 @@
 package fm.kirtsim.kharos.memorywell.db;
 
-import android.arch.persistence.room.Room;
-import android.content.Context;
 import android.database.sqlite.SQLiteConstraintException;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -14,18 +12,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 
-import fm.kirtsim.kharos.memorywell.db.dao.MemoryDao;
-import fm.kirtsim.kharos.memorywell.db.dao.TagDao;
+import fm.kirtsim.kharos.memorywell.AssertUtil;
+import fm.kirtsim.kharos.memorywell.DbUtil;
 import fm.kirtsim.kharos.memorywell.db.dao.TaggingDao;
 import fm.kirtsim.kharos.memorywell.db.entity.Tagging;
-import fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks;
-import fm.kirtsim.kharos.memorywell.db.mock.TagMocks;
 import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
 
-import static fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks.getTaggingMocks;
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_DELETE_COUNT;
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_MISSING_WORD;
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_NO_EXCEPTION;
+import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_NULL;
+import static fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks.getMockTaggings;
 import static fm.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
 import static java.util.stream.Collectors.toList;
 import static junit.framework.Assert.assertEquals;
@@ -37,32 +36,16 @@ import static junit.framework.Assert.fail;
 @RunWith(AndroidJUnit4.class)
 public class TaggingDaoTest {
 
-    private static final String ERR_NULL = "Actual value was null.";
-    private static final String ERR_SIZE = "The size of the list is wrong.";
-    private static final String ERR_LIST_ITEM = "Item in the list is wrong.";
-    private static final String ERR_EXCEPTION = "An exception was expected.";
-    private static final String ERR_CONTAIN_WORD = "A specific word was missing in a string.";
-
     private static final String WORD_UNIQUE = "UNIQUE";
     private static final String WORD_FK = "FOREIGN KEY";
 
     private MemoryDatabase db;
     private TaggingDao taggingDao;
-    private MemoryDao memoryDao;
-    private TagDao tagDao;
 
     @Before
     public void initBeforeEach() {
-        final Context context = InstrumentationRegistry.getContext();
-        db = Room.inMemoryDatabaseBuilder(context, MemoryDatabase.class).build();
-        memoryDao = db.memoryDao();
-        tagDao = db.tagDao();
+        db = DbUtil.setupDatabase(InstrumentationRegistry.getContext());
         taggingDao = db.taggingDao();
-
-        memoryDao.insert(MemoryMocks.getMockMemories());
-        tagDao.insert(TagMocks.getMockTags());
-        for (Tagging tagging : getTaggingMocks())
-            taggingDao.insert(tagging);
     }
 
     @After
@@ -72,10 +55,10 @@ public class TaggingDaoTest {
 
     @Test
     public void insert_existing_ignore_test() {
-        Tagging duplicate = getTaggingMocks().get(5);
+        Tagging duplicate = getMockTaggings().get(5);
 
         Exception ex = assertThrowOnInsert(duplicate, SQLiteConstraintException.class);
-        assertTrue(ERR_CONTAIN_WORD, ex.getMessage().contains(WORD_UNIQUE));
+        assertTrue(ERR_MISSING_WORD, ex.getMessage().contains(WORD_UNIQUE));
     }
 
     @Test
@@ -83,7 +66,7 @@ public class TaggingDaoTest {
         Tagging toInsert = new Tagging(102, 1);
 
         Exception ex = assertThrowOnInsert(toInsert, SQLiteConstraintException.class);
-        assertTrue(ERR_CONTAIN_WORD, ex.getMessage().contains(WORD_FK));
+        assertTrue(ERR_MISSING_WORD, ex.getMessage().contains(WORD_FK));
     }
 
     @Test
@@ -91,20 +74,20 @@ public class TaggingDaoTest {
         Tagging toInsert = new Tagging(1, 100);
 
         Exception ex = assertThrowOnInsert(toInsert, SQLiteConstraintException.class);
-        assertTrue(ERR_CONTAIN_WORD, ex.getMessage().contains(WORD_FK));
+        assertTrue(ERR_MISSING_WORD, ex.getMessage().contains(WORD_FK));
     }
 
     @Test
     public void selectAll_test() {
         List<Tagging> selected = getValue(taggingDao.selectAll());
-        List<Tagging> expected = getTaggingMocks();
+        List<Tagging> expected = getMockTaggings();
 
         assertListsEqual(expected, selected);
     }
 
     @Test
     public void selectSingle_test() {
-        Tagging expected = getTaggingMocks().get(7);
+        Tagging expected = getMockTaggings().get(7);
 
         Tagging selected = getValue(taggingDao.selectSingle(expected.memoryId, expected.tagId));
 
@@ -169,52 +152,45 @@ public class TaggingDaoTest {
 
     @Test
     public void delete_test() {
-        List<Tagging> taggings = getTaggingMocks();
+        List<Tagging> taggings = getMockTaggings();
         List<Tagging> toDelete = taggings.stream().filter(t -> t.tagId == 1).collect(toList());
         List<Tagging> expected = taggings.stream().filter(t -> t.tagId != 1).collect(toList());
 
         int deleteCount = taggingDao.delete(toDelete);
         List<Tagging> remaining = getValue(taggingDao.selectAll());
 
-        assertEquals(toDelete.size(), deleteCount);
+        assertEquals(ERR_DB_DELETE_COUNT, toDelete.size(), deleteCount);
         assertListsEqual(expected, remaining);
     }
 
     @Test
     public void delete_notExistingTagId_test() {
         List<Tagging> toDelete = Lists.newArrayList(new Tagging(1, 1001));
-        List<Tagging> expected = getTaggingMocks();
+        List<Tagging> expected = getMockTaggings();
 
         int deleteCount = taggingDao.delete(toDelete);
         List<Tagging> remaining = getValue(taggingDao.selectAll());
 
-        assertEquals(0, deleteCount);
+        assertEquals(ERR_DB_DELETE_COUNT,0, deleteCount);
         assertListsEqual(expected, remaining);
     }
 
     @Test
     public void delete_notExistingMemoryId_test() {
         List<Tagging> toDelete = Lists.newArrayList(new Tagging(1001, 1));
-        List<Tagging> expected = getTaggingMocks();
+        List<Tagging> expected = getMockTaggings();
 
         int deleteCount = taggingDao.delete(toDelete);
         List<Tagging> remaining = getValue(taggingDao.selectAll());
 
-        assertEquals(0, deleteCount);
+        assertEquals(ERR_DB_DELETE_COUNT, 0, deleteCount);
         assertListsEqual(expected, remaining);
     }
 
     private void assertListsEqual(List<Tagging> expected, List<Tagging> actual) {
-        assertNotNull(ERR_NULL, actual);
-        assertEquals(ERR_SIZE, expected.size(), actual.size());
-        Comparator<Tagging> comparator = (t1, t2) -> Long.compare(t1.memoryId, t2.memoryId) == 0 ?
-                Long.compare(t1.tagId, t2.tagId) : Long.compare(t1.memoryId, t2.memoryId);
-        expected.sort(comparator);
-        actual.sort(comparator);
-
-        for (int i = 0; i < expected.size(); ++i) {
-            assertEquals(ERR_LIST_ITEM, expected, actual);
-        }
+        AssertUtil.assertListsEquals(expected, actual,
+                (t1, t2) -> t1.memoryId == t2.memoryId ?
+                        Long.compare(t1.tagId, t2.tagId) : Long.compare(t1.memoryId, t2.memoryId));
     }
 
     private <E extends Exception> E assertThrowOnInsert(Tagging tagging, Class<E> exClass) {
@@ -224,7 +200,7 @@ public class TaggingDaoTest {
             assertTrue(ex.getClass().isAssignableFrom(exClass));
             return (E) ex;
         }
-        fail(ERR_EXCEPTION);
+        fail(ERR_NO_EXCEPTION);
         return null;
     }
 

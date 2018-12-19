@@ -19,10 +19,10 @@ public interface MemoryDao {
     List<Long> insert(List<Memory> memories);
 
     @Update
-    void update(List<Memory> memories);
+    int update(List<Memory> memories);
 
     @Delete
-    void delete(List<Memory> memories);
+    int delete(List<Memory> memories);
 
     @Query("select * from Memory where id = :id")
     LiveData<Memory> selectById(long id);
