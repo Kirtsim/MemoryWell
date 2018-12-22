@@ -17,7 +17,7 @@ import java.util.List;
 import fm.kirtsim.kharos.memorywell.AssertUtil;
 import fm.kirtsim.kharos.memorywell.DbUtil;
 import fm.kirtsim.kharos.memorywell.db.dao.TaggingDao;
-import fm.kirtsim.kharos.memorywell.db.entity.Tagging;
+import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
 import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
 
 import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_DELETE_COUNT;
@@ -34,7 +34,7 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
-public class TaggingDaoTest {
+public class TaggingEntityDaoTest {
 
     private static final String WORD_UNIQUE = "UNIQUE";
     private static final String WORD_FK = "FOREIGN KEY";
@@ -55,7 +55,7 @@ public class TaggingDaoTest {
 
     @Test
     public void insert_existing_ignore_test() {
-        Tagging duplicate = getMockTaggings().get(5);
+        TaggingEntity duplicate = getMockTaggings().get(5);
 
         Exception ex = assertThrowOnInsert(duplicate, SQLiteConstraintException.class);
         assertTrue(ERR_MISSING_WORD, ex.getMessage().contains(WORD_UNIQUE));
@@ -63,7 +63,7 @@ public class TaggingDaoTest {
 
     @Test
     public void insert_notExistingMemory_ignore_test() {
-        Tagging toInsert = new Tagging(102, 1);
+        TaggingEntity toInsert = new TaggingEntity(102, 1);
 
         Exception ex = assertThrowOnInsert(toInsert, SQLiteConstraintException.class);
         assertTrue(ERR_MISSING_WORD, ex.getMessage().contains(WORD_FK));
@@ -71,7 +71,7 @@ public class TaggingDaoTest {
 
     @Test
     public void insert_notExistingTags_ignore_test() {
-        Tagging toInsert = new Tagging(1, 100);
+        TaggingEntity toInsert = new TaggingEntity(1, 100);
 
         Exception ex = assertThrowOnInsert(toInsert, SQLiteConstraintException.class);
         assertTrue(ERR_MISSING_WORD, ex.getMessage().contains(WORD_FK));
@@ -79,17 +79,17 @@ public class TaggingDaoTest {
 
     @Test
     public void selectAll_test() {
-        List<Tagging> selected = getValue(taggingDao.selectAll());
-        List<Tagging> expected = getMockTaggings();
+        List<TaggingEntity> selected = getValue(taggingDao.selectAll());
+        List<TaggingEntity> expected = getMockTaggings();
 
         assertListsEqual(expected, selected);
     }
 
     @Test
     public void selectSingle_test() {
-        Tagging expected = getMockTaggings().get(7);
+        TaggingEntity expected = getMockTaggings().get(7);
 
-        Tagging selected = getValue(taggingDao.selectSingle(expected.memoryId, expected.tagId));
+        TaggingEntity selected = getValue(taggingDao.selectSingle(expected.memoryId, expected.tagId));
 
         assertNotNull(ERR_NULL, selected);
         assertEquals(expected, selected);
@@ -97,67 +97,67 @@ public class TaggingDaoTest {
 
     @Test
     public void selectSingle_notExisting_test() {
-        Tagging selected = getValue(taggingDao.selectSingle(100, 1001));
+        TaggingEntity selected = getValue(taggingDao.selectSingle(100, 1001));
 
         assertNull(selected);
     }
 
     @Test
     public void selectByMemoryIds_test() {
-        List<List<Tagging>> testTaggings = TaggingMocks.getTestTagginsByMemoryIds();
+        List<List<TaggingEntity>> testTaggings = TaggingMocks.getTestTagginsByMemoryIds();
         List<Long> memoryIds = testTaggings.stream().map(list -> list.get(0).memoryId).collect(toList());
-        List<Tagging> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
+        List<TaggingEntity> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
 
-        List<Tagging> selected = getValue(taggingDao.selectByMemoryIds(memoryIds));
+        List<TaggingEntity> selected = getValue(taggingDao.selectByMemoryIds(memoryIds));
 
         assertListsEqual(expected, selected);
     }
 
     @Test
     public void selectByMemoryIds_notExistingId_test() {
-        List<List<Tagging>> testTaggings = TaggingMocks.getTestTagginsByMemoryIds();
+        List<List<TaggingEntity>> testTaggings = TaggingMocks.getTestTagginsByMemoryIds();
         List<Long> memoryIds = testTaggings.stream().map(list -> list.get(0).memoryId).collect(toList());
         memoryIds.add(101L);
-        List<Tagging> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
+        List<TaggingEntity> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
 
-        List<Tagging> selected = getValue(taggingDao.selectByMemoryIds(memoryIds));
+        List<TaggingEntity> selected = getValue(taggingDao.selectByMemoryIds(memoryIds));
 
         assertListsEqual(expected, selected);
     }
 
     @Test
     public void selectByTagIds_test() {
-        List<List<Tagging>> testTaggings = TaggingMocks.getTestTaggingsByTagIds();
+        List<List<TaggingEntity>> testTaggings = TaggingMocks.getTestTaggingsByTagIds();
         List<Long> tagIds = testTaggings.stream().map(list -> list.get(0).tagId).collect(toList());
 
-        List<Tagging> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
+        List<TaggingEntity> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
 
-        List<Tagging> selected = getValue(taggingDao.selectByTagIds(tagIds));
+        List<TaggingEntity> selected = getValue(taggingDao.selectByTagIds(tagIds));
 
         assertListsEqual(expected, selected);
     }
 
     @Test
     public void selectByTagIds_notExistingTagIds_test() {
-        List<List<Tagging>> testTaggings = TaggingMocks.getTestTaggingsByTagIds();
+        List<List<TaggingEntity>> testTaggings = TaggingMocks.getTestTaggingsByTagIds();
         List<Long> tagIds = testTaggings.stream().map(list -> list.get(0).tagId).collect(toList());
         tagIds.add(2012L);
 
-        List<Tagging> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
+        List<TaggingEntity> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
 
-        List<Tagging> selected = getValue(taggingDao.selectByTagIds(tagIds));
+        List<TaggingEntity> selected = getValue(taggingDao.selectByTagIds(tagIds));
 
         assertListsEqual(expected, selected);
     }
 
     @Test
     public void delete_test() {
-        List<Tagging> taggings = getMockTaggings();
-        List<Tagging> toDelete = taggings.stream().filter(t -> t.tagId == 1).collect(toList());
-        List<Tagging> expected = taggings.stream().filter(t -> t.tagId != 1).collect(toList());
+        List<TaggingEntity> taggings = getMockTaggings();
+        List<TaggingEntity> toDelete = taggings.stream().filter(t -> t.tagId == 1).collect(toList());
+        List<TaggingEntity> expected = taggings.stream().filter(t -> t.tagId != 1).collect(toList());
 
         int deleteCount = taggingDao.delete(toDelete);
-        List<Tagging> remaining = getValue(taggingDao.selectAll());
+        List<TaggingEntity> remaining = getValue(taggingDao.selectAll());
 
         assertEquals(ERR_DB_DELETE_COUNT, toDelete.size(), deleteCount);
         assertListsEqual(expected, remaining);
@@ -165,11 +165,11 @@ public class TaggingDaoTest {
 
     @Test
     public void delete_notExistingTagId_test() {
-        List<Tagging> toDelete = Lists.newArrayList(new Tagging(1, 1001));
-        List<Tagging> expected = getMockTaggings();
+        List<TaggingEntity> toDelete = Lists.newArrayList(new TaggingEntity(1, 1001));
+        List<TaggingEntity> expected = getMockTaggings();
 
         int deleteCount = taggingDao.delete(toDelete);
-        List<Tagging> remaining = getValue(taggingDao.selectAll());
+        List<TaggingEntity> remaining = getValue(taggingDao.selectAll());
 
         assertEquals(ERR_DB_DELETE_COUNT,0, deleteCount);
         assertListsEqual(expected, remaining);
@@ -177,23 +177,23 @@ public class TaggingDaoTest {
 
     @Test
     public void delete_notExistingMemoryId_test() {
-        List<Tagging> toDelete = Lists.newArrayList(new Tagging(1001, 1));
-        List<Tagging> expected = getMockTaggings();
+        List<TaggingEntity> toDelete = Lists.newArrayList(new TaggingEntity(1001, 1));
+        List<TaggingEntity> expected = getMockTaggings();
 
         int deleteCount = taggingDao.delete(toDelete);
-        List<Tagging> remaining = getValue(taggingDao.selectAll());
+        List<TaggingEntity> remaining = getValue(taggingDao.selectAll());
 
         assertEquals(ERR_DB_DELETE_COUNT, 0, deleteCount);
         assertListsEqual(expected, remaining);
     }
 
-    private void assertListsEqual(List<Tagging> expected, List<Tagging> actual) {
+    private void assertListsEqual(List<TaggingEntity> expected, List<TaggingEntity> actual) {
         AssertUtil.assertListsEquals(expected, actual,
                 (t1, t2) -> t1.memoryId == t2.memoryId ?
                         Long.compare(t1.tagId, t2.tagId) : Long.compare(t1.memoryId, t2.memoryId));
     }
 
-    private <E extends Exception> E assertThrowOnInsert(Tagging tagging, Class<E> exClass) {
+    private <E extends Exception> E assertThrowOnInsert(TaggingEntity tagging, Class<E> exClass) {
         try {
             taggingDao.insert(tagging);
         } catch (Exception ex) {

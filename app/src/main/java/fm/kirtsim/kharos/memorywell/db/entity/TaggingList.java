@@ -4,9 +4,9 @@ import java.util.List;
 
 public class TaggingList {
 
-    public final List<Tagging> taggings;
+    public final List<TaggingEntity> taggings;
 
-    public TaggingList(List<Tagging> taggings) {
+    public TaggingList(List<TaggingEntity> taggings) {
         this.taggings = taggings;
     }
 }

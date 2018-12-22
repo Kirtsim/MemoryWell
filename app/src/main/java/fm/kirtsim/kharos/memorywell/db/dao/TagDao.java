@@ -10,32 +10,32 @@ import android.arch.persistence.room.Update;
 
 import java.util.List;
 
-import fm.kirtsim.kharos.memorywell.db.entity.Tag;
+import fm.kirtsim.kharos.memorywell.db.entity.TagEntity;
 
 @Dao
 public interface TagDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    List<Long> insert(List<Tag> tags);
+    List<Long> insert(List<TagEntity> tags);
 
     @Delete
-    int delete(List<Tag> tags);
+    int delete(List<TagEntity> tags);
 
     @Update
-    int update(List<Tag> tags);
+    int update(List<TagEntity> tags);
 
-    @Query("select * from Tag")
-    LiveData<List<Tag>> selectAll();
+    @Query("select * from TagEntity")
+    LiveData<List<TagEntity>> selectAll();
 
-    @Query("select * from Tag where id in (:ids)")
-    LiveData<List<Tag>> selectByIds(List<Long> ids);
+    @Query("select * from TagEntity where id in (:ids)")
+    LiveData<List<TagEntity>> selectByIds(List<Long> ids);
 
-    @Query("select * from Tag where lower(name) in (:tagNames)")
-    LiveData<List<Tag>> selectByNames(List<String> tagNames);
+    @Query("select * from TagEntity where lower(name) in (:tagNames)")
+    LiveData<List<TagEntity>> selectByNames(List<String> tagNames);
 
-    @Query("select * from Tag where name in (:tagNames)")
-    LiveData<List<Tag>> selectByNamesCaseSensitive(List<String> tagNames);
+    @Query("select * from TagEntity where name in (:tagNames)")
+    LiveData<List<TagEntity>> selectByNamesCaseSensitive(List<String> tagNames);
 
-    @Query("select * from Tag where name like :subName || '%'")
-    LiveData<List<Tag>> selectTagsWithNamesStarting(String subName);
+    @Query("select * from TagEntity where name like :subName || '%'")
+    LiveData<List<TagEntity>> selectTagsWithNamesStarting(String subName);
 }

@@ -5,7 +5,7 @@ import org.junit.Test;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotSame;
 
-public class TagTest {
+public class TagEntityTest {
 
     private static final long TEST_ID = 1;
     private static final String TEST_NAME = "TEST_TAG";
@@ -74,13 +74,13 @@ public class TagTest {
 
 //    @Test
 //    public void setTest() {
-//        Set<Tag> tags1 = Sets.newConcurrentHashSet();
-//        Set<Tag> tags2 = Sets.newConcurrentHashSet();
-//        tags1.add(new Tag(1, "a"));
-//        tags1.add(new Tag(2, "b"));
+//        Set<TagEntity> tags1 = Sets.newConcurrentHashSet();
+//        Set<TagEntity> tags2 = Sets.newConcurrentHashSet();
+//        tags1.add(new TagEntity(1, "a"));
+//        tags1.add(new TagEntity(2, "b"));
 //
-//        tags2.add(new Tag(1, "a"));
-//        tags2.add(new Tag(2, "b"));
+//        tags2.add(new TagEntity(1, "a"));
+//        tags2.add(new TagEntity(2, "b"));
 //
 //        assertEquals(tags1.hashCode(), tags2.hashCode());
 //    }

@@ -8,29 +8,29 @@ import java.util.Objects;
 
 @Entity(primaryKeys = {"memoryId", "tagId"},
 foreignKeys = {
-        @ForeignKey(entity = Memory.class,
+        @ForeignKey(entity = MemoryEntity.class,
                 parentColumns = "id",
                 childColumns = "memoryId"),
-        @ForeignKey(entity = Tag.class,
+        @ForeignKey(entity = TagEntity.class,
                 parentColumns = "id",
                 childColumns = "tagId")
 })
-public class Tagging {
+public class TaggingEntity {
 
     public long memoryId;
     public long tagId;
 
-    public Tagging() {
+    public TaggingEntity() {
     }
 
     @Ignore
-    public Tagging(long memoryId, long tagId) {
+    public TaggingEntity(long memoryId, long tagId) {
         this.memoryId = memoryId;
         this.tagId = tagId;
     }
 
     @Ignore
-    public Tagging(Tagging other) {
+    public TaggingEntity(TaggingEntity other) {
         this(other.memoryId, other.tagId);
     }
 
@@ -41,11 +41,11 @@ public class Tagging {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Tagging))
+        if (!(obj instanceof TaggingEntity))
             return false;
         if (this == obj)
             return true;
-        Tagging other = (Tagging) obj;
+        TaggingEntity other = (TaggingEntity) obj;
         return memoryId == other.memoryId && tagId == other.tagId;
     }
 }

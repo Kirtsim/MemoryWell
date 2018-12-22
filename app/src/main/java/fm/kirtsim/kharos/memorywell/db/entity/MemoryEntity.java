@@ -7,7 +7,7 @@ import android.arch.persistence.room.PrimaryKey;
 import java.util.Objects;
 
 @Entity
-public class Memory {
+public class MemoryEntity {
 
     @PrimaryKey
     public long id;
@@ -16,13 +16,13 @@ public class Memory {
     public long dateTime;
     public String imagePath;
 
-    public Memory() {
+    public MemoryEntity() {
         title = "";
         comment = "";
         imagePath = "";
     }
 
-    public Memory(Memory other) {
+    public MemoryEntity(MemoryEntity other) {
         this.id = other.id;
         this.title = other.title;
         this.comment = other.comment;
@@ -31,7 +31,7 @@ public class Memory {
     }
 
     @Ignore
-    public Memory(long id, String title, String comment, long dateTime, String imagePath) {
+    public MemoryEntity(long id, String title, String comment, long dateTime, String imagePath) {
         this.id = id;
         this.title = title;
         this.comment = comment;
@@ -48,11 +48,11 @@ public class Memory {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Memory))
+        if (!(obj instanceof MemoryEntity))
             return false;
         if (this == obj)
             return true;
-        Memory other = (Memory) obj;
+        MemoryEntity other = (MemoryEntity) obj;
         return id == other.id &&
                 title.equals(other.title) &&
                 comment.equals(other.comment) &&

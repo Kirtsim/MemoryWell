@@ -5,7 +5,7 @@ import android.content.Context;
 
 import fm.kirtsim.kharos.memorywell.db.MemoryDatabase;
 import fm.kirtsim.kharos.memorywell.db.dao.TaggingDao;
-import fm.kirtsim.kharos.memorywell.db.entity.Tagging;
+import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
 import fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks;
 import fm.kirtsim.kharos.memorywell.db.mock.TagMocks;
 import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
@@ -21,7 +21,7 @@ public final class DbUtil {
         db.tagDao().insert(TagMocks.getMockTags());
 
         final TaggingDao taggingDao = db.taggingDao();
-        for (Tagging tagging : TaggingMocks.getMockTaggings())
+        for (TaggingEntity tagging : TaggingMocks.getMockTaggings())
             taggingDao.insert(tagging);
 
         return db;

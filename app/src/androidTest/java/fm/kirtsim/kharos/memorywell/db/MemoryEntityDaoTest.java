@@ -19,7 +19,7 @@ import java.util.List;
 import fm.kirtsim.kharos.memorywell.AssertUtil;
 import fm.kirtsim.kharos.memorywell.DbUtil;
 import fm.kirtsim.kharos.memorywell.db.dao.MemoryDao;
-import fm.kirtsim.kharos.memorywell.db.entity.Memory;
+import fm.kirtsim.kharos.memorywell.db.entity.MemoryEntity;
 import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
 
 import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_DELETE_COUNT;
@@ -31,7 +31,7 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
-public class MemoryDaoTest {
+public class MemoryEntityDaoTest {
 
     private MemoryDatabase db;
     private MemoryDao memoryDao;
@@ -52,22 +52,22 @@ public class MemoryDaoTest {
 
     @Test
     public void insert_test() {
-        List<Memory> expected = Lists.newArrayList(createMemoryWithId(100), createMemoryWithId(200));
+        List<MemoryEntity> expected = Lists.newArrayList(createMemoryWithId(100), createMemoryWithId(200));
 
         List<Long> ids = memoryDao.insert(expected);
-        List<Memory> inserted = Lists.transform(ids, this::createMemoryWithId);
+        List<MemoryEntity> inserted = Lists.transform(ids, this::createMemoryWithId);
 
         assertMemoryListsEqual(expected, inserted);
     }
 
     @Test
     public void insert_duplicateIgnored_test() {
-        List<Memory> forInsertion = Lists.newArrayList(createMemoryWithId(100), createMemoryWithId(200),
+        List<MemoryEntity> forInsertion = Lists.newArrayList(createMemoryWithId(100), createMemoryWithId(200),
                 createMemoryWithId(1));
         List<Long> ids = memoryDao.insert(forInsertion);
-        List<Memory> expected = forInsertion.subList(0, 2);
+        List<MemoryEntity> expected = forInsertion.subList(0, 2);
 
-        List<Memory> inserted = ids.stream().filter(id -> id > -1)
+        List<MemoryEntity> inserted = ids.stream().filter(id -> id > -1)
                 .map(this::createMemoryWithId).collect(toList());
 
         assertMemoryListsEqual(expected, inserted);
@@ -75,7 +75,7 @@ public class MemoryDaoTest {
 
     @Test
     public void selectAll_test() {
-        List<Memory> selected = getValue(memoryDao.selectAll());
+        List<MemoryEntity> selected = getValue(memoryDao.selectAll());
 
         assertMemoryListsEqual(getMockMemories(), selected);
     }
@@ -84,15 +84,15 @@ public class MemoryDaoTest {
     public void selectAll_emptyDb_test() {
         db.taggingDao().delete(TaggingMocks.getMockTaggings());
         memoryDao.delete(getMockMemories());
-        List<Memory> selected = getValue(memoryDao.selectAll());
+        List<MemoryEntity> selected = getValue(memoryDao.selectAll());
 
         assertMemoryListsEqual(Lists.newArrayList(), selected);
     }
 
     @Test
     public void selectByIds_existingEntries_test() {
-        List<Memory> expected = getMockMemories().subList(2, 4);
-        List<Memory> selected = getValue(memoryDao.selectByIds(Lists.transform(expected, (m) -> m.id)));
+        List<MemoryEntity> expected = getMockMemories().subList(2, 4);
+        List<MemoryEntity> selected = getValue(memoryDao.selectByIds(Lists.transform(expected, (m) -> m.id)));
 
         assertMemoryListsEqual(expected, selected);
     }
@@ -100,24 +100,24 @@ public class MemoryDaoTest {
     @Test
     public void selectByIds_notExistingEntry_test() {
         final long id = 1204;
-        List<Memory> memories = getValue(memoryDao.selectByIds(Lists.newArrayList(id)));
+        List<MemoryEntity> memories = getValue(memoryDao.selectByIds(Lists.newArrayList(id)));
 
         assertMemoryListsEqual(Lists.newArrayList(), memories);
     }
 
     @Test
     public void selectByIds_oneNotExisting_test() {
-        List<Memory> expected = getMockMemories().subList(5, 7);
+        List<MemoryEntity> expected = getMockMemories().subList(5, 7);
         List<Long> ids = Lists.newArrayList(Lists.transform(expected, (m) -> m.id));
         ids.add(12345L);
-        List<Memory> selected = getValue(memoryDao.selectByIds(ids));
+        List<MemoryEntity> selected = getValue(memoryDao.selectByIds(ids));
 
         assertMemoryListsEqual(expected, selected);
     }
 
     @Test
     public void selectByTimeRange_selectAll_test() {
-        List<Memory> selected = getValue(memoryDao.selectByTimeRange(1, 13));
+        List<MemoryEntity> selected = getValue(memoryDao.selectByTimeRange(1, 13));
 
         assertMemoryListsEqual(getMockMemories(), selected);
     }
@@ -125,30 +125,30 @@ public class MemoryDaoTest {
     @Test
     public void selectByTimeRange_selectSingle_test() {
         final long from = 2, to = 2;
-        List<Memory> expected = memoriesWithinTimeRange(from, to);
-        List<Memory> selected = getValue(memoryDao.selectByTimeRange(from, to));
+        List<MemoryEntity> expected = memoriesWithinTimeRange(from, to);
+        List<MemoryEntity> selected = getValue(memoryDao.selectByTimeRange(from, to));
 
         assertMemoryListsEqual(expected, selected);
     }
 
     @Test
     public void selectByTimeRange_incorrectParams_test() {
-        List<Memory> retMemories = getValue(memoryDao.selectByTimeRange(3, 1));
+        List<MemoryEntity> retMemories = getValue(memoryDao.selectByTimeRange(3, 1));
 
         assertMemoryListsEqual(Lists.newArrayList(), retMemories);
     }
 
     @Test
     public void update_test() {
-        List<Memory> expected = getMockMemories();
-        Memory updated = expected.get(5);
+        List<MemoryEntity> expected = getMockMemories();
+        MemoryEntity updated = expected.get(5);
         updated.comment = "updated comment";
         updated.dateTime = 1001;
         updated.imagePath = "new/image/path";
         updated.title = "updated title";
 
         int updateCount = memoryDao.update(Lists.newArrayList(updated));
-        List<Memory> selected = getValue(memoryDao.selectAll());
+        List<MemoryEntity> selected = getValue(memoryDao.selectAll());
 
         assertEquals(ERR_DB_UPDATE_COUNT,1, updateCount);
         assertMemoryListsEqual(expected, selected);
@@ -156,11 +156,11 @@ public class MemoryDaoTest {
 
     @Test
     public void update_notExistingId_test() {
-        List<Memory> expected = getMockMemories();
-        List<Memory> toUpdate = Lists.newArrayList(new Memory(100001, "a", "b", 1, ""));
+        List<MemoryEntity> expected = getMockMemories();
+        List<MemoryEntity> toUpdate = Lists.newArrayList(new MemoryEntity(100001, "a", "b", 1, ""));
 
         int updateCount = memoryDao.update(Lists.newArrayList(toUpdate));
-        List<Memory> selected = getValue(memoryDao.selectAll());
+        List<MemoryEntity> selected = getValue(memoryDao.selectAll());
 
         assertEquals(ERR_DB_UPDATE_COUNT,0, updateCount);
         assertMemoryListsEqual(expected, selected);
@@ -168,11 +168,11 @@ public class MemoryDaoTest {
 
     @Test
     public void update_noChanges_test() {
-        List<Memory> expected = getMockMemories();
-        List<Memory> toUpdate = expected.subList(0, 1);
+        List<MemoryEntity> expected = getMockMemories();
+        List<MemoryEntity> toUpdate = expected.subList(0, 1);
 
         int updateCount = memoryDao.update(Lists.newArrayList(toUpdate));
-        List<Memory> selected = getValue(memoryDao.selectAll());
+        List<MemoryEntity> selected = getValue(memoryDao.selectAll());
 
         assertEquals(ERR_DB_UPDATE_COUNT, 1, updateCount);
         assertMemoryListsEqual(expected, selected);
@@ -181,14 +181,14 @@ public class MemoryDaoTest {
     @Test
     public void delete_test() {
         long unboundMemoryId = TaggingMocks.getUnboundMemoryIds().get(0);
-        List<Memory> originalMemories = getMockMemories();
-        List<Memory> expected = originalMemories.stream()
+        List<MemoryEntity> originalMemories = getMockMemories();
+        List<MemoryEntity> expected = originalMemories.stream()
                 .filter(m -> m.id != unboundMemoryId).collect(toList());
-        List<Memory> toDelete = originalMemories.stream()
+        List<MemoryEntity> toDelete = originalMemories.stream()
                 .filter(m -> m.id == unboundMemoryId).collect(toList());
 
         int deleteCount = memoryDao.delete(toDelete);
-        List<Memory> remaining = getValue(memoryDao.selectAll());
+        List<MemoryEntity> remaining = getValue(memoryDao.selectAll());
 
         assertEquals(ERR_DB_DELETE_COUNT,1, deleteCount);
         assertMemoryListsEqual(expected, remaining);
@@ -197,15 +197,15 @@ public class MemoryDaoTest {
     @Test
     public void delete_idMatchOnly_test() {
         long unboundMemoryId = TaggingMocks.getUnboundMemoryIds().get(0);
-        List<Memory> originalMemories = getMockMemories();
-        List<Memory> expected = originalMemories.stream()
+        List<MemoryEntity> originalMemories = getMockMemories();
+        List<MemoryEntity> expected = originalMemories.stream()
                 .filter(m -> m.id != unboundMemoryId).collect(toList());
-        List<Memory> toDelete = originalMemories.stream()
+        List<MemoryEntity> toDelete = originalMemories.stream()
                 .filter(m -> m.id == unboundMemoryId).collect(toList());
         toDelete.get(0).title = "DO NOT MATCH THE TITLE!";
 
         int deleteCount = memoryDao.delete(toDelete);
-        List<Memory> remaining = getValue(memoryDao.selectAll());
+        List<MemoryEntity> remaining = getValue(memoryDao.selectAll());
 
         assertEquals(ERR_DB_DELETE_COUNT,1, deleteCount);
         assertMemoryListsEqual(expected, remaining);
@@ -214,20 +214,20 @@ public class MemoryDaoTest {
     @Test(expected = SQLiteConstraintException.class)
     public void delete_boundMemoryByTagging_test() {
         long boundMemoryId = TaggingMocks.getBoundMemoryIds().get(0);
-        List<Memory> expected = getMockMemories();
-        List<Memory> toDelete = getMockMemories().stream()
+        List<MemoryEntity> expected = getMockMemories();
+        List<MemoryEntity> toDelete = getMockMemories().stream()
                 .filter(m -> m.id == boundMemoryId).collect(toList());
 
         memoryDao.delete(toDelete);
     }
 
-    private Memory createMemoryWithId(long id) {
-        Memory memory = new Memory();
+    private MemoryEntity createMemoryWithId(long id) {
+        MemoryEntity memory = new MemoryEntity();
         memory.id = id;
         return memory;
     }
 
-    private void assertMemoryListsEqual(List<Memory> expected, List<Memory> actual) {
+    private void assertMemoryListsEqual(List<MemoryEntity> expected, List<MemoryEntity> actual) {
         AssertUtil.assertListsEquals(expected, actual, (m1, m2) -> Long.compare(m1.id, m2.id));
     }
 }

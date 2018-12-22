@@ -8,24 +8,24 @@ import android.arch.persistence.room.PrimaryKey;
 import java.util.Objects;
 
 @Entity(indices = {@Index(value = {"name"}, unique = true)})
-public class Tag {
+public class TagEntity {
 
     @PrimaryKey
     public long id;
     public String name;
 
-    public Tag() {
+    public TagEntity() {
         this.name = "";
     }
 
     @Ignore
-    public Tag(long id, String name) {
+    public TagEntity(long id, String name) {
         this.id = id;
         this.name = name;
     }
 
     @Ignore
-    public Tag(Tag other) {
+    public TagEntity(TagEntity other) {
         this.id = other.id;
         this.name = other.name;
     }
@@ -39,9 +39,9 @@ public class Tag {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (!(obj instanceof Tag))
+        if (!(obj instanceof TagEntity))
             return false;
-        Tag other = (Tag) obj;
+        TagEntity other = (TagEntity) obj;
         return this.id == other.id && this.name.equals(other.name);
     }
 }

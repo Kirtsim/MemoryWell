@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 
-import fm.kirtsim.kharos.memorywell.db.entity.Tagging;
+import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
 
 import static java.util.stream.Collectors.toList;
 
@@ -37,30 +37,30 @@ public final class TaggingMocks {
         return tagIds;
     }
 
-    public static List<Tagging> getMockTaggings() {
-        List<Tagging> mocks = Lists.newArrayList();
+    public static List<TaggingEntity> getMockTaggings() {
+        List<TaggingEntity> mocks = Lists.newArrayList();
         for(Holder holder : taggings)
             addGeneratedTaggings(holder, mocks);
         return mocks;
     }
 
-    private static void addGeneratedTaggings(Holder holder, List<Tagging> taggings) {
+    private static void addGeneratedTaggings(Holder holder, List<TaggingEntity> taggings) {
         for (Long tagId : holder.tagIds)
-            taggings.add(new Tagging(holder.memoryId, tagId));
+            taggings.add(new TaggingEntity(holder.memoryId, tagId));
     }
 
-    public static List<List<Tagging>> getTestTagginsByMemoryIds() {
-        List<List<Tagging>> mocks = Lists.newArrayList(Lists.newArrayList(), Lists.newArrayList());
+    public static List<List<TaggingEntity>> getTestTagginsByMemoryIds() {
+        List<List<TaggingEntity>> mocks = Lists.newArrayList(Lists.newArrayList(), Lists.newArrayList());
         addGeneratedTaggings(taggings.get(0), mocks.get(0));
         addGeneratedTaggings(taggings.get(1), mocks.get(1));
         return mocks;
     }
 
-    public static List<List<Tagging>> getTestTaggingsByTagIds() {
-        List<List<Tagging>> mocks = Lists.newArrayListWithCapacity(tagIdsInMultipleTaggings.length);
+    public static List<List<TaggingEntity>> getTestTaggingsByTagIds() {
+        List<List<TaggingEntity>> mocks = Lists.newArrayListWithCapacity(tagIdsInMultipleTaggings.length);
         for (Long tagId : tagIdsInMultipleTaggings) {
-            List<Tagging> testTaggins = taggings.stream().filter(h -> h.tagIds.contains(tagId))
-                    .map(h -> new Tagging(h.memoryId, tagId)).collect(toList());
+            List<TaggingEntity> testTaggins = taggings.stream().filter(h -> h.tagIds.contains(tagId))
+                    .map(h -> new TaggingEntity(h.memoryId, tagId)).collect(toList());
             mocks.add(testTaggins);
         }
         return mocks;

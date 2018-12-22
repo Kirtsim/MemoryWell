@@ -15,7 +15,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
-public class MemoryTest {
+public class MemoryEntityTest {
 
     private static final Memory DEF_MEMORY = new Builder()
             .memoryId(-1)
@@ -182,10 +182,10 @@ public class MemoryTest {
         Builder builder = new Builder().addTag(tag).addTag(tag2)
                 .removeTag(tag);
         Memory memory = builder.build();
-        assertEquals("Tag not removed with a copy obj.", 1, memory.listTags().size());
+        assertEquals("TagEntity not removed with a copy obj.", 1, memory.listTags().size());
 
         memory = builder.removeTag(tag2copy).build();
-        assertTrue("Tag not removed with original obj.", memory.listTags().isEmpty());
+        assertTrue("TagEntity not removed with original obj.", memory.listTags().isEmpty());
     }
 
     @Test
