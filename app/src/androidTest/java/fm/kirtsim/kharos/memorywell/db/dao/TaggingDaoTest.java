@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db;
+package fm.kirtsim.kharos.memorywell.db.dao;
 
 import android.database.sqlite.SQLiteConstraintException;
 import android.support.test.InstrumentationRegistry;
@@ -14,18 +14,18 @@ import org.junit.runner.RunWith;
 import java.util.Collection;
 import java.util.List;
 
-import fm.kirtsim.kharos.memorywell.AssertUtil;
-import fm.kirtsim.kharos.memorywell.DbUtil;
-import fm.kirtsim.kharos.memorywell.db.dao.TaggingDao;
+import fmShared.kirtsim.kharos.memorywell.util.AssertUtil;
+import fmShared.kirtsim.kharos.memorywell.db.util.DbUtil;
+import fm.kirtsim.kharos.memorywell.db.MemoryDatabase;
 import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
-import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
+import fmShared.kirtsim.kharos.memorywell.db.mock.TaggingEntityMocks;
 
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_DELETE_COUNT;
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_MISSING_WORD;
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_NO_EXCEPTION;
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_NULL;
-import static fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks.getMockTaggings;
-import static fm.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_DB_DELETE_COUNT;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_MISSING_WORD;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_NO_EXCEPTION;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_NULL;
+import static fmShared.kirtsim.kharos.memorywell.db.mock.TaggingEntityMocks.getMockTaggings;
+import static fmShared.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
 import static java.util.stream.Collectors.toList;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
@@ -34,7 +34,7 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
-public class TaggingEntityDaoTest {
+public class TaggingDaoTest {
 
     private static final String WORD_UNIQUE = "UNIQUE";
     private static final String WORD_FK = "FOREIGN KEY";
@@ -104,7 +104,7 @@ public class TaggingEntityDaoTest {
 
     @Test
     public void selectByMemoryIds_test() {
-        List<List<TaggingEntity>> testTaggings = TaggingMocks.getTestTagginsByMemoryIds();
+        List<List<TaggingEntity>> testTaggings = TaggingEntityMocks.getTestTagginsByMemoryIds();
         List<Long> memoryIds = testTaggings.stream().map(list -> list.get(0).memoryId).collect(toList());
         List<TaggingEntity> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
 
@@ -115,7 +115,7 @@ public class TaggingEntityDaoTest {
 
     @Test
     public void selectByMemoryIds_notExistingId_test() {
-        List<List<TaggingEntity>> testTaggings = TaggingMocks.getTestTagginsByMemoryIds();
+        List<List<TaggingEntity>> testTaggings = TaggingEntityMocks.getTestTagginsByMemoryIds();
         List<Long> memoryIds = testTaggings.stream().map(list -> list.get(0).memoryId).collect(toList());
         memoryIds.add(101L);
         List<TaggingEntity> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
@@ -127,7 +127,7 @@ public class TaggingEntityDaoTest {
 
     @Test
     public void selectByTagIds_test() {
-        List<List<TaggingEntity>> testTaggings = TaggingMocks.getTestTaggingsByTagIds();
+        List<List<TaggingEntity>> testTaggings = TaggingEntityMocks.getTestTaggingsByTagIds();
         List<Long> tagIds = testTaggings.stream().map(list -> list.get(0).tagId).collect(toList());
 
         List<TaggingEntity> expected = testTaggings.stream().flatMap(Collection::stream).collect(toList());
@@ -139,7 +139,7 @@ public class TaggingEntityDaoTest {
 
     @Test
     public void selectByTagIds_notExistingTagIds_test() {
-        List<List<TaggingEntity>> testTaggings = TaggingMocks.getTestTaggingsByTagIds();
+        List<List<TaggingEntity>> testTaggings = TaggingEntityMocks.getTestTaggingsByTagIds();
         List<Long> tagIds = testTaggings.stream().map(list -> list.get(0).tagId).collect(toList());
         tagIds.add(2012L);
 

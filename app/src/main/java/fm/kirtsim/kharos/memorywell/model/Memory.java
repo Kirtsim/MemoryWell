@@ -75,7 +75,12 @@ public class Memory {
                 tagsById.equals(other.tagsById);
     }
 
+    @Override
+    public String toString() {
 
+        return "Memory: id(" + id + "), title(" + title + "), comment(" + comment + ") + date(" +
+                dateTime + "), imgPath(" + imagePath + ")";
+    }
 
     public final static class Builder {
         private long id;
@@ -85,7 +90,6 @@ public class Memory {
         private String imagePath;
         private Map<Long, Tag> tagsById;
         private Map<String, Tag> tagsByName;
-        private int clashReason;
 
         public Builder() {
             id = -1;

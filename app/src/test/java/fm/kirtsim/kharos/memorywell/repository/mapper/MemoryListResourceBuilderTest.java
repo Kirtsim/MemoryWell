@@ -19,17 +19,17 @@ import fm.kirtsim.kharos.memorywell.model.Tag;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 
-public final class MemoryListResourceBuildCoordinatorTest {
+public final class MemoryListResourceBuilderTest {
 
     private static final IMemoryEntityDataMapper memoryMapper = new MemoryEntityDataMapper();
     private static final ITagEntityDataMapper tagMapper = new TagEntityDataMapper();
 
-    private IMemoryListResourceBuildCoordinator buildCoordinator;
+    private IMemoryListBuilder buildCoordinator;
 
 
     @Before
     public void initBeforeEachTest() {
-        buildCoordinator = new MemoryListResourceBuildCoordinator(memoryMapper, tagMapper);
+        buildCoordinator = new MemoryListBuilder(memoryMapper, tagMapper);
     }
 
 
@@ -43,7 +43,7 @@ public final class MemoryListResourceBuildCoordinatorTest {
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        Resource<MemoryList> result=  buildCoordinator.updateMemoryEntities(entities);
+        Resource<MemoryList> result=  buildCoordinator.includeMemories(entities);
 
         assertEquals(Status.LOADING, result.status());
         assertEquals(expectedMemories, result.data().memories);
@@ -57,13 +57,13 @@ public final class MemoryListResourceBuildCoordinatorTest {
         List<MemoryEntity> memoryEntities = Lists.newArrayList(entity1, entity2);
 
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        buildCoordinator.updateTagEntities(tagEntities);
+        buildCoordinator.includeTags(tagEntities);
 
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        Resource<MemoryList> result=  buildCoordinator.updateMemoryEntities(memoryEntities);
+        Resource<MemoryList> result=  buildCoordinator.includeMemories(memoryEntities);
 
         assertEquals(Status.LOADING, result.status());
         assertEquals(expectedMemories, result.data().memories);
@@ -78,13 +78,13 @@ public final class MemoryListResourceBuildCoordinatorTest {
 
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
-        buildCoordinator.updateTaggingEntities(taggingEntities);
+        buildCoordinator.includeTaggings(taggingEntities);
 
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        Resource<MemoryList> result=  buildCoordinator.updateMemoryEntities(memoryEntities);
+        Resource<MemoryList> result=  buildCoordinator.includeMemories(memoryEntities);
 
         assertEquals(Status.LOADING, result.status());
         assertEquals(expectedMemories, result.data().memories);
@@ -99,17 +99,17 @@ public final class MemoryListResourceBuildCoordinatorTest {
 
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
-        buildCoordinator.updateTaggingEntities(taggingEntities);
+        buildCoordinator.includeTaggings(taggingEntities);
 
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        buildCoordinator.updateTagEntities(tagEntities);
+        buildCoordinator.includeTags(tagEntities);
         List<Tag> tags = tagEntities.stream().map(tagMapper::mapEntity).collect(toList());
 
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1, tags),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        Resource<MemoryList> result=  buildCoordinator.updateMemoryEntities(memoryEntities);
+        Resource<MemoryList> result=  buildCoordinator.includeMemories(memoryEntities);
 
         assertEquals(Status.SUCCESS, result.status());
         assertEquals(expectedMemories, result.data().memories);
@@ -127,7 +127,7 @@ public final class MemoryListResourceBuildCoordinatorTest {
 
         final List<Memory> emptyList = Lists.newArrayList();
 
-        Resource<MemoryList> result=  buildCoordinator.updateTagEntities(entities);
+        Resource<MemoryList> result=  buildCoordinator.includeTags(entities);
 
         assertEquals(Status.LOADING, result.status());
         assertEquals(emptyList, result.data().memories);
@@ -139,10 +139,10 @@ public final class MemoryListResourceBuildCoordinatorTest {
         MemoryEntity entity1 = new MemoryEntity(1, "t1", "c1", 11, "p1");
         MemoryEntity entity2 = new MemoryEntity(2, "t2", "c2", 12, "p2");
         List<MemoryEntity> memoryEntities = Lists.newArrayList(entity1, entity2);
-        buildCoordinator.updateMemoryEntities(memoryEntities);
+        buildCoordinator.includeMemories(memoryEntities);
 
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        Resource<MemoryList> result=  buildCoordinator.updateTagEntities(tagEntities);
+        Resource<MemoryList> result=  buildCoordinator.includeTags(tagEntities);
 
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
@@ -159,11 +159,11 @@ public final class MemoryListResourceBuildCoordinatorTest {
     public void updateTagEntities_noMemories_test() {
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
-        buildCoordinator.updateTaggingEntities(taggingEntities);
+        buildCoordinator.includeTaggings(taggingEntities);
 
         final List<Memory> emptyList = Lists.newArrayList();
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        Resource<MemoryList> result=  buildCoordinator.updateTagEntities(tagEntities);
+        Resource<MemoryList> result=  buildCoordinator.includeTags(tagEntities);
 
         assertEquals(Status.LOADING, result.status());
         assertEquals(emptyList, result.data().memories);
@@ -175,14 +175,14 @@ public final class MemoryListResourceBuildCoordinatorTest {
         MemoryEntity entity1 = new MemoryEntity(1, "t1", "c1", 11, "p1");
         MemoryEntity entity2 = new MemoryEntity(2, "t2", "c2", 12, "p2");
         List<MemoryEntity> memoryEntities = Lists.newArrayList(entity1, entity2);
-        buildCoordinator.updateMemoryEntities(memoryEntities);
+        buildCoordinator.includeMemories(memoryEntities);
 
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
-        buildCoordinator.updateTaggingEntities(taggingEntities);
+        buildCoordinator.includeTaggings(taggingEntities);
 
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        Resource<MemoryList> result = buildCoordinator.updateTagEntities(tagEntities);
+        Resource<MemoryList> result = buildCoordinator.includeTags(tagEntities);
 
         List<Tag> tags = tagEntities.stream().map(tagMapper::mapEntity).collect(toList());
         final List<Tag> emptyList = Lists.newArrayList();
@@ -204,7 +204,7 @@ public final class MemoryListResourceBuildCoordinatorTest {
 
         final List<Memory> emptyList = Lists.newArrayList();
 
-        Resource<MemoryList> result=  buildCoordinator.updateTaggingEntities(entities);
+        Resource<MemoryList> result=  buildCoordinator.includeTaggings(entities);
 
         assertEquals(Status.LOADING, result.status());
         assertEquals(emptyList, result.data().memories);
@@ -216,12 +216,12 @@ public final class MemoryListResourceBuildCoordinatorTest {
         MemoryEntity entity1 = new MemoryEntity(1, "t1", "c1", 11, "p1");
         MemoryEntity entity2 = new MemoryEntity(2, "t2", "c2", 12, "p2");
         List<MemoryEntity> memoryEntities = Lists.newArrayList(entity1, entity2);
-        buildCoordinator.updateMemoryEntities(memoryEntities);
+        buildCoordinator.includeMemories(memoryEntities);
 
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
 
-        Resource<MemoryList> result = buildCoordinator.updateTaggingEntities(taggingEntities);
+        Resource<MemoryList> result = buildCoordinator.includeTaggings(taggingEntities);
 
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
@@ -236,11 +236,11 @@ public final class MemoryListResourceBuildCoordinatorTest {
     public void updateTaggingEntities_noMemories_test() {
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
-        buildCoordinator.updateTaggingEntities(taggingEntities);
+        buildCoordinator.includeTaggings(taggingEntities);
 
         final List<Memory> emptyList = Lists.newArrayList();
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        Resource<MemoryList> result =  buildCoordinator.updateTagEntities(tagEntities);
+        Resource<MemoryList> result =  buildCoordinator.includeTags(tagEntities);
 
         assertEquals(Status.LOADING, result.status());
         assertEquals(emptyList, result.data().memories);
@@ -252,14 +252,14 @@ public final class MemoryListResourceBuildCoordinatorTest {
         MemoryEntity entity1 = new MemoryEntity(1, "t1", "c1", 11, "p1");
         MemoryEntity entity2 = new MemoryEntity(2, "t2", "c2", 12, "p2");
         List<MemoryEntity> memoryEntities = Lists.newArrayList(entity1, entity2);
-        buildCoordinator.updateMemoryEntities(memoryEntities);
+        buildCoordinator.includeMemories(memoryEntities);
 
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        buildCoordinator.updateTagEntities(tagEntities);
+        buildCoordinator.includeTags(tagEntities);
 
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
-        Resource<MemoryList> result = buildCoordinator.updateTaggingEntities(taggingEntities);
+        Resource<MemoryList> result = buildCoordinator.includeTaggings(taggingEntities);
 
         List<Tag> tags = tagEntities.stream().map(tagMapper::mapEntity).collect(toList());
         final List<Tag> emptyList = Lists.newArrayList();

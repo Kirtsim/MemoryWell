@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell;
+package fmShared.kirtsim.kharos.memorywell.util;
 
 import com.google.common.collect.Lists;
 

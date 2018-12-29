@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db.mock;
+package fmShared.kirtsim.kharos.memorywell.db.mock;
 
 import com.google.common.collect.Lists;
 
@@ -8,7 +8,7 @@ import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
 
 import static java.util.stream.Collectors.toList;
 
-public final class TaggingMocks {
+public final class TaggingEntityMocks {
 
     private static final class Holder {
         long memoryId;
@@ -68,28 +68,28 @@ public final class TaggingMocks {
 
     public static List<Long> getUnboundMemoryIds() {
         final List<Long> boundIds = taggings.stream().map(h -> h.memoryId).collect(toList());
-        List<Long> allIds = MemoryMocks.getMockMemories().stream().map(m -> m.id).collect(toList());
+        List<Long> allIds = MemoryEntityMocks.getMockMemories().stream().map(m -> m.id).collect(toList());
 
         return allIds.stream().filter(id -> !boundIds.contains(id)).collect(toList());
     }
 
     public static List<Long> getBoundMemoryIds() {
         final List<Long> boundIds = taggings.stream().map(h -> h.memoryId).collect(toList());
-        List<Long> allIds = MemoryMocks.getMockMemories().stream().map(m -> m.id).collect(toList());
+        List<Long> allIds = MemoryEntityMocks.getMockMemories().stream().map(m -> m.id).collect(toList());
 
         return allIds.stream().filter(boundIds::contains).collect(toList());
     }
 
     public static List<Long> getUnboundTagIds() {
         List<Long> boundIds = taggings.stream().flatMap(h -> h.tagIds.stream()).distinct().collect(toList());
-        List<Long> allTagIds = TagMocks.getMockTags().stream().map(t -> t.id).collect(toList());
+        List<Long> allTagIds = TagEntityMocks.getMockTags().stream().map(t -> t.id).collect(toList());
 
         return allTagIds.stream().filter(id -> !boundIds.contains(id)).collect(toList());
     }
 
     public static List<Long> getBoundTagIds() {
         List<Long> boundIds = taggings.stream().flatMap(h -> h.tagIds.stream()).distinct().collect(toList());
-        List<Long> allTagIds = TagMocks.getMockTags().stream().map(t -> t.id).collect(toList());
+        List<Long> allTagIds = TagEntityMocks.getMockTags().stream().map(t -> t.id).collect(toList());
 
         return allTagIds.stream().filter(boundIds::contains).collect(toList());
 

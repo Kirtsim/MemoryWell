@@ -35,4 +35,30 @@ public class Resource<Data> {
     public static <Data> Resource<Data> loading(Data data) {
         return new Resource<>(Status.LOADING, data, "");
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Resource))
+            return false;
+        if (this == obj)
+            return true;
+        Resource<Data> other = null;
+        try {
+             other = (Resource<Data>) obj;
+        } catch (Exception ex) {
+            return false;
+        }
+
+        return other.message.equals(message)&&
+                other.status == status &&
+                data.equals(other.data);
+    }
+
+    @Override
+    public String toString() {
+        return "Resource<" + data.getClass().getSimpleName() + ">\n" +
+                "- status: " + status.toString() +
+                "\n- message: " + message +
+                "\n- data: " + data.toString();
+    }
 }

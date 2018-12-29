@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 
-import fm.kirtsim.kharos.memorywell.db.Resource;
 import fm.kirtsim.kharos.memorywell.db.entity.MemoryEntity;
 import fm.kirtsim.kharos.memorywell.db.entity.MemoryList;
 import fm.kirtsim.kharos.memorywell.db.entity.TagEntity;
@@ -14,7 +13,7 @@ import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
 import fm.kirtsim.kharos.memorywell.model.Memory;
 import fm.kirtsim.kharos.memorywell.model.Tag;
 
-public class MemoryListResourceBuildCoordinator implements IMemoryListResourceBuildCoordinator {
+public class MemoryListBuilder implements IMemoryListBuilder {
 
     private IMemoryEntityDataMapper memoryMapper;
     private ITagEntityDataMapper tagMapper;
@@ -23,8 +22,8 @@ public class MemoryListResourceBuildCoordinator implements IMemoryListResourceBu
     private Map<Long, List<Long>> tagIdsByMemoryId;
     private Map<Long, Tag> tags;
 
-    public MemoryListResourceBuildCoordinator(IMemoryEntityDataMapper memoryMapper,
-                                              ITagEntityDataMapper tagMapper) {
+    public MemoryListBuilder(IMemoryEntityDataMapper memoryMapper,
+                             ITagEntityDataMapper tagMapper) {
         this.memoryMapper = memoryMapper;
         this.tagMapper = tagMapper;
         memoryEntities = Maps.newConcurrentMap();
@@ -33,16 +32,16 @@ public class MemoryListResourceBuildCoordinator implements IMemoryListResourceBu
     }
 
     @Override
-    public Resource<MemoryList> updateMemoryEntities(List<MemoryEntity> memoryEntities) {
+    public IMemoryListBuilder includeMemories(List<MemoryEntity> memoryEntities) {
         this.memoryEntities.clear();
         for (MemoryEntity entity : memoryEntities) {
             this.memoryEntities.put(entity.id, entity);
         }
-        return createResource();
+        return this;
     }
 
     @Override
-    public Resource<MemoryList> updateTaggingEntities(List<TaggingEntity> taggingEntities) {
+    public IMemoryListBuilder includeTaggings(List<TaggingEntity> taggingEntities) {
         tagIdsByMemoryId.clear();
         for (TaggingEntity entity : taggingEntities) {
             List<Long> tagIds = tagIdsByMemoryId.get(entity.memoryId);
@@ -52,22 +51,23 @@ public class MemoryListResourceBuildCoordinator implements IMemoryListResourceBu
             }
             tagIds.add(entity.tagId);
         }
-        return createResource();
+        return this;
     }
 
     @Override
-    public Resource<MemoryList> updateTagEntities(List<TagEntity> tagEntities) {
+    public IMemoryListBuilder includeTags(List<TagEntity> tagEntities) {
         tags.clear();
         for (TagEntity entity : tagEntities) {
             Tag tag = tagMapper.mapEntity(entity);
             tags.put(tag.id(), tag);
         }
-        return createResource();
+        return this;
     }
 
-    private Resource<MemoryList> createResource() {
+    @Override
+    public MemoryList buildMemoryList() {
         if (memoryEntities.isEmpty())
-            return Resource.loading(new MemoryList(Lists.newArrayList()));
+            return new MemoryList(Lists.newArrayList());
 
         final List<Memory> memories = Lists.newArrayList();
         if (tagIdsByMemoryId.isEmpty() || tags.isEmpty()) {
@@ -75,7 +75,7 @@ public class MemoryListResourceBuildCoordinator implements IMemoryListResourceBu
             for (MemoryEntity entity : memoryEntities.values()) {
                 memories.add(memoryMapper.mapEntity(entity, emptyList));
             }
-            return Resource.loading(new MemoryList(memories));
+            return new MemoryList(memories);
         }
 
         for (Map.Entry<Long, MemoryEntity> entityEntry : memoryEntities.entrySet()) {
@@ -93,6 +93,6 @@ public class MemoryListResourceBuildCoordinator implements IMemoryListResourceBu
             }
             memories.add(memoryMapper.mapEntity(entity, tags));
         }
-        return Resource.success(new MemoryList(memories));
+        return new MemoryList(memories);
     }
 }

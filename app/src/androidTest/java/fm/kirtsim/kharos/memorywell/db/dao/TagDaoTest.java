@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db;
+package fm.kirtsim.kharos.memorywell.db.dao;
 
 import android.database.sqlite.SQLiteConstraintException;
 import android.support.test.InstrumentationRegistry;
@@ -14,25 +14,25 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 
-import fm.kirtsim.kharos.memorywell.AssertUtil;
-import fm.kirtsim.kharos.memorywell.DbUtil;
-import fm.kirtsim.kharos.memorywell.db.dao.TagDao;
+import fmShared.kirtsim.kharos.memorywell.util.AssertUtil;
+import fmShared.kirtsim.kharos.memorywell.db.util.DbUtil;
+import fm.kirtsim.kharos.memorywell.db.MemoryDatabase;
 import fm.kirtsim.kharos.memorywell.db.entity.TagEntity;
 import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
-import fm.kirtsim.kharos.memorywell.db.mock.TagMocks;
-import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
+import fmShared.kirtsim.kharos.memorywell.db.mock.TagEntityMocks;
+import fmShared.kirtsim.kharos.memorywell.db.mock.TaggingEntityMocks;
 
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_DELETE_COUNT;
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_UPDATE_COUNT;
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_NO_EXCEPTION;
-import static fm.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_DB_DELETE_COUNT;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_DB_UPDATE_COUNT;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_NO_EXCEPTION;
+import static fmShared.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
-public final class TagEntityDaoTest {
+public final class TagDaoTest {
 
     private MemoryDatabase db;
     private TagDao tagDao;
@@ -62,7 +62,7 @@ public final class TagEntityDaoTest {
 
     @Test
     public void insert_nameDuplicateIgnored_test() {
-        TagEntity duplicateTag = new TagEntity(100, TagMocks.getMockTags().get(0).name);
+        TagEntity duplicateTag = new TagEntity(100, TagEntityMocks.getMockTags().get(0).name);
         List<TagEntity> toInsert = Lists.newArrayList(duplicateTag, new TagEntity(200, "new name"));
         List<TagEntity> expected = new ArrayList<>(toInsert.subList(1, 2));
         expected.forEach(tag -> tag.name = "");
@@ -78,20 +78,20 @@ public final class TagEntityDaoTest {
     public void selectAll_test() {
         List<TagEntity> selected = getValue(tagDao.selectAll());
 
-        assertTagListsEqual(TagMocks.getMockTags(), selected);
+        assertTagListsEqual(TagEntityMocks.getMockTags(), selected);
     }
 
     @Test
     public void selectAll_emptyDb() {
-        db.taggingDao().delete(TaggingMocks.getMockTaggings());
-        tagDao.delete(TagMocks.getMockTags());
+        db.taggingDao().delete(TaggingEntityMocks.getMockTaggings());
+        tagDao.delete(TagEntityMocks.getMockTags());
         List<TagEntity> selected = getValue(tagDao.selectAll());
         assertTagListsEqual(Lists.newArrayList(), selected);
     }
 
     @Test
     public void selectByIds_test() {
-        List<TagEntity> expected = TagMocks.getMockTags().subList(3, 6);
+        List<TagEntity> expected = TagEntityMocks.getMockTags().subList(3, 6);
         List<TagEntity> selected = getValue(tagDao.selectByIds(expected.stream()
                 .map(tag -> tag.id).collect(toList())));
 
@@ -100,7 +100,7 @@ public final class TagEntityDaoTest {
 
     @Test
     public void selectByIds_missingTags_test() {
-        List<TagEntity> expected = TagMocks.getMockTags().subList(3, 6);
+        List<TagEntity> expected = TagEntityMocks.getMockTags().subList(3, 6);
         List<Long> ids = expected.stream().map(tag -> tag.id).collect(toList());
         ids.add(310L);
         ids.add(311L);
@@ -114,7 +114,7 @@ public final class TagEntityDaoTest {
 
     @Test
     public void selectByNames_test() {
-        List<TagEntity> expected = TagMocks.getMockTags().subList(5, 10);
+        List<TagEntity> expected = TagEntityMocks.getMockTags().subList(5, 10);
         List<String> names = expected.stream().map(tag -> tag.name.toLowerCase()).collect(toList());
 
         List<TagEntity> selected = getValue(tagDao.selectByNames(names));
@@ -124,7 +124,7 @@ public final class TagEntityDaoTest {
 
     @Test
     public void selectByNames_missingTags_test() {
-        List<TagEntity> expected = TagMocks.getMockTags().subList(5, 10);
+        List<TagEntity> expected = TagEntityMocks.getMockTags().subList(5, 10);
         List<String> names = expected.stream().map(tag -> tag.name.toLowerCase()).collect(toList());
         names.add("NO_TAG_NAME");
         names.add("EMAN_GAT_ON");
@@ -145,7 +145,7 @@ public final class TagEntityDaoTest {
 
     @Test
     public void selectByNamesCaseSensitive_test() {
-        List<TagEntity> expected = TagMocks.getMockTags();
+        List<TagEntity> expected = TagEntityMocks.getMockTags();
         List<String> names = expected.stream().map(tag -> tag.name).collect(toList());
 
         List<TagEntity> selected = getValue(tagDao.selectByNamesCaseSensitive(names));
@@ -155,7 +155,7 @@ public final class TagEntityDaoTest {
 
     @Test
     public void selectByNamesCaseSensitive_caseMismatch_test() {
-        List<String> names = Lists.newArrayList(TagMocks.tagNameWithInvertedCase());
+        List<String> names = Lists.newArrayList(TagEntityMocks.tagNameWithInvertedCase());
 
         List<TagEntity> selected = getValue(tagDao.selectByNamesCaseSensitive(names));
 
@@ -166,7 +166,7 @@ public final class TagEntityDaoTest {
     @Test
     public void selectTagsWithNamesStarting_multipleMatch_test() {
         List<TagEntity> expected = Lists.newArrayList();
-        String prefix = TagMocks.tagsMatchingNames3(expected);
+        String prefix = TagEntityMocks.tagsMatchingNames3(expected);
 
         List<TagEntity> selected = getValue(tagDao.selectTagsWithNamesStarting(prefix));
 
@@ -176,7 +176,7 @@ public final class TagEntityDaoTest {
     @Test
     public void selectTagsWithNamesStarting_singleMatch_test() {
         List<TagEntity> expected = Lists.newArrayList(new TagEntity(0, ""));
-        String prefix = TagMocks.tagWithUniqueNamePrefix(expected.get(0));
+        String prefix = TagEntityMocks.tagWithUniqueNamePrefix(expected.get(0));
 
         List<TagEntity> selected = getValue(tagDao.selectTagsWithNamesStarting(prefix));
 
@@ -185,13 +185,13 @@ public final class TagEntityDaoTest {
 
     @Test
     public void selectTagsWithNameStarting_noMatch_test() {
-        List<TagEntity> selected = getValue(tagDao.selectTagsWithNamesStarting(TagMocks.missingTagPrefix()));
+        List<TagEntity> selected = getValue(tagDao.selectTagsWithNamesStarting(TagEntityMocks.missingTagPrefix()));
         assertTagListsEqual(Lists.newArrayList(), selected);
     }
 
     @Test
     public void update_test() {
-        List<TagEntity> expected = TagMocks.getMockTags();
+        List<TagEntity> expected = TagEntityMocks.getMockTags();
         List<TagEntity> updated = expected.subList(0, 2);
         updated.get(0).name = "new_name_1";
         updated.get(1).name = "new_name_2";
@@ -205,7 +205,7 @@ public final class TagEntityDaoTest {
 
     @Test
     public void update_oneNotExisting_test() {
-        List<TagEntity> expected = TagMocks.getMockTags();
+        List<TagEntity> expected = TagEntityMocks.getMockTags();
         List<TagEntity> updated = Lists.newArrayList(expected.get(0), new TagEntity(10001, "blah_1"));
         updated.get(0).name = "new_name_1";
 
@@ -218,7 +218,7 @@ public final class TagEntityDaoTest {
 
     @Test
     public void update_noChanges_test() {
-        List<TagEntity> expected = TagMocks.getMockTags();
+        List<TagEntity> expected = TagEntityMocks.getMockTags();
         List<TagEntity> updated = Lists.newArrayList(expected.get(0));
 
         int updateCount = tagDao.update(updated);
@@ -230,8 +230,8 @@ public final class TagEntityDaoTest {
 
     @Test
     public void delete_test() {
-        List<Long> unboundTagIds = TaggingMocks.getUnboundTagIds().stream().limit(2).collect(toList());
-        List<TagEntity> allTags = TagMocks.getMockTags();
+        List<Long> unboundTagIds = TaggingEntityMocks.getUnboundTagIds().stream().limit(2).collect(toList());
+        List<TagEntity> allTags = TagEntityMocks.getMockTags();
         List<TagEntity> expected = allTags.stream().filter(t -> !unboundTagIds.contains(t.id)).collect(toList());
         List<TagEntity> toDelete = allTags.stream().filter(t -> unboundTagIds.contains(t.id)).collect(toList());
 
@@ -244,8 +244,8 @@ public final class TagEntityDaoTest {
 
     @Test
     public void delete_onlyIdMatch_test() {
-        long unboundTagId = TaggingMocks.getUnboundTagIds().get(0);
-        List<TagEntity> allTags = TagMocks.getMockTags();
+        long unboundTagId = TaggingEntityMocks.getUnboundTagIds().get(0);
+        List<TagEntity> allTags = TagEntityMocks.getMockTags();
         List<TagEntity> expected = allTags.stream().filter(t -> t.id != unboundTagId).collect(toList());
         List<TagEntity> toDelete = allTags.stream().filter(t -> unboundTagId == t.id).collect(toList());
         toDelete.get(0).name = "different_name";
@@ -260,11 +260,11 @@ public final class TagEntityDaoTest {
     @Test
     public void delete_boundTagInTagging_boundGoesFirst_deleteNothing_test() {
         final long boundTagId = 2;
-        db.taggingDao().delete(TaggingMocks.getMockTaggings());
+        db.taggingDao().delete(TaggingEntityMocks.getMockTaggings());
         db.taggingDao().insert(new TaggingEntity(2,boundTagId));
 
 
-        List<TagEntity> expected = TagMocks.getMockTags();
+        List<TagEntity> expected = TagEntityMocks.getMockTags();
         TagEntity notBound = expected.stream().filter(tag -> tag.id == 1).findFirst().get();;
         TagEntity bound = expected.stream().filter(tag -> tag.id == 2).findFirst().get();
         assertNotNull(bound);

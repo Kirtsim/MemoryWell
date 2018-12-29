@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db;
+package fm.kirtsim.kharos.memorywell.db.dao;
 
 import android.arch.core.executor.testing.InstantTaskExecutorRule;
 import android.database.sqlite.SQLiteConstraintException;
@@ -16,22 +16,22 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 
-import fm.kirtsim.kharos.memorywell.AssertUtil;
-import fm.kirtsim.kharos.memorywell.DbUtil;
-import fm.kirtsim.kharos.memorywell.db.dao.MemoryDao;
+import fmShared.kirtsim.kharos.memorywell.util.AssertUtil;
+import fmShared.kirtsim.kharos.memorywell.db.util.DbUtil;
+import fm.kirtsim.kharos.memorywell.db.MemoryDatabase;
 import fm.kirtsim.kharos.memorywell.db.entity.MemoryEntity;
-import fm.kirtsim.kharos.memorywell.db.mock.TaggingMocks;
+import fmShared.kirtsim.kharos.memorywell.db.mock.TaggingEntityMocks;
 
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_DELETE_COUNT;
-import static fm.kirtsim.kharos.memorywell.AssertUtil.ERR_DB_UPDATE_COUNT;
-import static fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks.getMockMemories;
-import static fm.kirtsim.kharos.memorywell.db.mock.MemoryMocks.memoriesWithinTimeRange;
-import static fm.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_DB_DELETE_COUNT;
+import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_DB_UPDATE_COUNT;
+import static fmShared.kirtsim.kharos.memorywell.db.mock.MemoryEntityMocks.getMockMemories;
+import static fmShared.kirtsim.kharos.memorywell.db.mock.MemoryEntityMocks.memoriesWithinTimeRange;
+import static fmShared.kirtsim.kharos.memorywell.db.util.LiveDataTestUtil.getValue;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(AndroidJUnit4.class)
-public class MemoryEntityDaoTest {
+public class MemoryDaoTest {
 
     private MemoryDatabase db;
     private MemoryDao memoryDao;
@@ -82,7 +82,7 @@ public class MemoryEntityDaoTest {
 
     @Test
     public void selectAll_emptyDb_test() {
-        db.taggingDao().delete(TaggingMocks.getMockTaggings());
+        db.taggingDao().delete(TaggingEntityMocks.getMockTaggings());
         memoryDao.delete(getMockMemories());
         List<MemoryEntity> selected = getValue(memoryDao.selectAll());
 
@@ -180,7 +180,7 @@ public class MemoryEntityDaoTest {
 
     @Test
     public void delete_test() {
-        long unboundMemoryId = TaggingMocks.getUnboundMemoryIds().get(0);
+        long unboundMemoryId = TaggingEntityMocks.getUnboundMemoryIds().get(0);
         List<MemoryEntity> originalMemories = getMockMemories();
         List<MemoryEntity> expected = originalMemories.stream()
                 .filter(m -> m.id != unboundMemoryId).collect(toList());
@@ -196,7 +196,7 @@ public class MemoryEntityDaoTest {
 
     @Test
     public void delete_idMatchOnly_test() {
-        long unboundMemoryId = TaggingMocks.getUnboundMemoryIds().get(0);
+        long unboundMemoryId = TaggingEntityMocks.getUnboundMemoryIds().get(0);
         List<MemoryEntity> originalMemories = getMockMemories();
         List<MemoryEntity> expected = originalMemories.stream()
                 .filter(m -> m.id != unboundMemoryId).collect(toList());
@@ -213,7 +213,7 @@ public class MemoryEntityDaoTest {
 
     @Test(expected = SQLiteConstraintException.class)
     public void delete_boundMemoryByTagging_test() {
-        long boundMemoryId = TaggingMocks.getBoundMemoryIds().get(0);
+        long boundMemoryId = TaggingEntityMocks.getBoundMemoryIds().get(0);
         List<MemoryEntity> expected = getMockMemories();
         List<MemoryEntity> toDelete = getMockMemories().stream()
                 .filter(m -> m.id == boundMemoryId).collect(toList());

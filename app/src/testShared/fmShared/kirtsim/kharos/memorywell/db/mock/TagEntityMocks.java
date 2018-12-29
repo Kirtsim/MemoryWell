@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db.mock;
+package fmShared.kirtsim.kharos.memorywell.db.mock;
 
 import com.google.common.collect.Lists;
 
@@ -6,7 +6,7 @@ import java.util.List;
 
 import fm.kirtsim.kharos.memorywell.db.entity.TagEntity;
 
-public final class TagMocks {
+public final class TagEntityMocks {
 
     private static final List<TagEntity> tags = Lists.newArrayList(
             new TagEntity(1, "Stock_1"),

@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db.util;
+package fmShared.kirtsim.kharos.memorywell.db.util;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;

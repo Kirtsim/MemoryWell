@@ -1,4 +1,4 @@
-package fm.kirtsim.kharos.memorywell.db.mock;
+package fmShared.kirtsim.kharos.memorywell.db.mock;
 
 import com.google.common.collect.Lists;
 
@@ -6,7 +6,7 @@ import java.util.List;
 
 import fm.kirtsim.kharos.memorywell.db.entity.MemoryEntity;
 
-public final class MemoryMocks {
+public final class MemoryEntityMocks {
 
     private static final List<MemoryEntity> memories = Lists.newArrayList(
             new MemoryEntity(1, "MemoryEntity 1", "Comment 1", 1, "path/im1"),
@@ -23,7 +23,7 @@ public final class MemoryMocks {
             new MemoryEntity(13, "MemoryEntity 13", "Comment 13", 13, "path/im13")
     );
 
-    private MemoryMocks() {}
+    private MemoryEntityMocks() {}
 
     public static int mockCount() {
         return memories.size();
