@@ -1,126 +1,72 @@
 package fm.kirtsim.kharos.memorywell.repository;
 
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MediatorLiveData;
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Transformations;
+import android.database.sqlite.SQLiteConstraintException;
+
+import com.google.common.collect.Lists;
+
+import java.util.List;
 
 import fm.kirtsim.kharos.memorywell.concurrency.ThreadPoster;
 import fm.kirtsim.kharos.memorywell.db.Resource;
 import fm.kirtsim.kharos.memorywell.db.dao.MemoryDao;
-import fm.kirtsim.kharos.memorywell.db.dao.TagDao;
-import fm.kirtsim.kharos.memorywell.db.dao.TaggingDao;
-import fm.kirtsim.kharos.memorywell.db.entity.MemoryList;
-import fm.kirtsim.kharos.memorywell.db.entity.TagList;
-import fm.kirtsim.kharos.memorywell.model.Memory;
-import fm.kirtsim.kharos.memorywell.model.Tag;
-import fm.kirtsim.kharos.memorywell.repository.mapper.IMemoryListBuilder;
+import fm.kirtsim.kharos.memorywell.db.entity.MemoryEntity;
 
 public final class MemoryRepository implements IMemoryRepository {
 
     private MemoryDao memoryDao;
-    private TagDao tagDao;
-    private TaggingDao taggingDao;
-    private IMemoryListBuilder memoryListBuilder;
-    private ThreadPoster queryPoster;
+    private LiveData<Resource<List<MemoryEntity>>> allMemories;
+    private ThreadPoster threadPoster;
 
-    public MemoryRepository(MemoryDao memoryDao, TagDao tagDao, TaggingDao taggingDao,
-                            IMemoryListBuilder memoryListBuilder,
-                            ThreadPoster queryPoster) {
+    public MemoryRepository(MemoryDao memoryDao, ThreadPoster threadPoster) {
         this.memoryDao = memoryDao;
-        this.tagDao = tagDao;
-        this.taggingDao = taggingDao;
-        this.memoryListBuilder = memoryListBuilder;
-        this.queryPoster = queryPoster;
+        this.threadPoster = threadPoster;
     }
 
     @Override
-    public LiveData<Resource<MemoryList>> listMemories() {
-        final MediatorLiveData<Resource<MemoryList>> memoryListLiveData = new MediatorLiveData<>();
-        queryPoster.post(() -> {
-            memoryListLiveData.addSource(memoryDao.selectAll(), memoryEntities ->
-                    memoryListLiveData.setValue(Resource.loading(
-                            memoryListBuilder.includeMemories(memoryEntities).buildMemoryList()))
-            );
+    public LiveData<Resource<List<MemoryEntity>>> listAllMemories() {
+        if (allMemories == null)
+            allMemories = Transformations.map(memoryDao.selectAll(), Resource::success);
+        return allMemories;
+    }
 
-            memoryListLiveData.addSource(taggingDao.selectAll(), taggingEntities ->
-                    memoryListBuilder.includeTaggings(taggingEntities)
-            );
+    @Override
+    public LiveData<Resource<List<MemoryEntity>>> listMemoriesWithinTimeRange(long from, long to) {
+        return Transformations.map(memoryDao.selectByTimeRange(from, to), Resource::success);
+    }
 
-            memoryListLiveData.addSource(tagDao.selectAll(), tagEntities ->
-                    memoryListLiveData.setValue(Resource.loading(
-                            memoryListBuilder.includeTags(tagEntities).buildMemoryList()))
-            );
+    @Override
+    public LiveData<Resource<List<Long>>> addMemory(MemoryEntity memory) {
+        MutableLiveData<Resource<List<Long>>> liveData = new MutableLiveData<>();
+        threadPoster.post(() -> {
+            try {
+                List<Long> ids = memoryDao.insert(Lists.newArrayList(memory));
+                liveData.postValue(Resource.success(ids));
+            } catch (SQLiteConstraintException ex) {
+                liveData.postValue(Resource.error(ex.getMessage(), Lists.newArrayList()));
+            }
         });
-        return memoryListLiveData;
+        return liveData;
     }
 
     @Override
-    public LiveData<Resource<MemoryList>> listMemoriesWithinTimeRange(long from, long to) {
-        final MediatorLiveData<Resource<MemoryList>> memoryListLiveData = new MediatorLiveData<>();
-        queryPoster.post(() -> {
-            memoryListLiveData.addSource(memoryDao.selectAll(), memoryEntities ->
-                    memoryListLiveData.setValue(Resource.loading(
-                            memoryListBuilder.includeMemories(memoryEntities).buildMemoryList()))
-            );
+    public LiveData<Resource<MemoryEntity>> updateMemory(MemoryEntity memory) {
+        throw new UnsupportedOperationException();
+    }
 
-            memoryListLiveData.addSource(taggingDao.selectAll(), taggingEntities ->
-                    memoryListBuilder.includeTaggings(taggingEntities)
-            );
-
-            memoryListLiveData.addSource(tagDao.selectAll(), tagEntities ->
-                    memoryListLiveData.setValue(Resource.loading(
-                            memoryListBuilder.includeTags(tagEntities).buildMemoryList()))
-            );
+    @Override
+    public LiveData<Resource<Integer>> removeMemories(List<MemoryEntity> memories) {
+        MutableLiveData<Resource<Integer>> liveData = new MutableLiveData<>();
+        threadPoster.post(() -> {
+            try {
+                int count = memoryDao.delete(memories);
+                liveData.postValue(Resource.success(count));
+            } catch (SQLiteConstraintException ex) {
+                liveData.postValue(Resource.error(ex.getMessage(), 0));
+            }
         });
-        return memoryListLiveData;
-    }
-
-    @Override
-    public LiveData<Resource<Memory>> addNewMemory(Memory memory) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<Memory>> updateMemory(Memory memory) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<Memory>> deleteMemory(Memory memory) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<MemoryList>> deleteMemories(MemoryList memory) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<TagList>> listAllTags() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<TagList>> listTagsWithPrefix(String prefix) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<Tag>> addNewTag(Tag tag) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<Tag>> deleteTag(Tag tag) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<TagList>> deleteTags(TagList tags) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public LiveData<Resource<Tag>> updateTag(Tag tag) {
-        throw new UnsupportedOperationException();
+        return liveData;
     }
 }

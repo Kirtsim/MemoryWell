@@ -1,9 +1,11 @@
 package fm.kirtsim.kharos.memorywell.repository;
 
 import android.arch.core.executor.testing.InstantTaskExecutorRule;
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
+import android.database.sqlite.SQLiteConstraintException;
+
+import com.google.common.collect.Lists;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -19,20 +21,13 @@ import java.util.List;
 import fm.kirtsim.kharos.memorywell.concurrency.ThreadPoster;
 import fm.kirtsim.kharos.memorywell.db.Resource;
 import fm.kirtsim.kharos.memorywell.db.dao.MemoryDao;
-import fm.kirtsim.kharos.memorywell.db.dao.TagDao;
-import fm.kirtsim.kharos.memorywell.db.dao.TaggingDao;
 import fm.kirtsim.kharos.memorywell.db.entity.MemoryEntity;
-import fm.kirtsim.kharos.memorywell.db.entity.MemoryList;
-import fm.kirtsim.kharos.memorywell.db.entity.TagEntity;
-import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
-import fm.kirtsim.kharos.memorywell.repository.mapper.IMemoryListBuilder;
 import fm.kirtsim.kharos.memorywell.repository.mapper.MemoryEntityDataMapper;
 import fm.kirtsim.kharos.memorywell.repository.mapper.MemoryListBuilder;
 import fm.kirtsim.kharos.memorywell.repository.mapper.TagEntityDataMapper;
 
 import static fmShared.kirtsim.kharos.memorywell.db.mock.MemoryEntityMocks.getMockMemories;
-import static fmShared.kirtsim.kharos.memorywell.db.mock.TagEntityMocks.getMockTags;
-import static fmShared.kirtsim.kharos.memorywell.db.mock.TaggingEntityMocks.getMockTaggings;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,10 +37,9 @@ public final class MemoryRepositoryTest {
     private ThreadPoster threadPoster;
     private IMemoryRepository repo;
     @Mock private MemoryDao memoryDao;
-    @Mock private TaggingDao taggingDao;
-    @Mock private TagDao tagDao;
-    @Mock
-    private Observer<Resource<MemoryList>> observer;
+    @Mock private Observer<Resource<List<MemoryEntity>>> selectionObserver;
+    @Mock private Observer<Resource<List<Long>>> additionObserver;
+    @Mock private Observer<Resource<Integer>> deletionObserver;
     private MemoryListBuilder memoryBuildCoordinator;
 
     @Rule
@@ -58,43 +52,77 @@ public final class MemoryRepositoryTest {
         memoryBuildCoordinator = new MemoryListBuilder(new MemoryEntityDataMapper(),
                 new TagEntityDataMapper());
 
-        final IMemoryListBuilder resCoordinator =
-                new MemoryListBuilder(new MemoryEntityDataMapper(),
-                new TagEntityDataMapper());
-
-        repo = new MemoryRepository(memoryDao, tagDao, taggingDao, resCoordinator ,threadPoster);
+        repo = new MemoryRepository(memoryDao, threadPoster);
     }
 
     @Test
-    public void listMemories_test() {
-        LiveData<List<MemoryEntity>> memoryLiveData = createLiveData(getMockMemories());
+    public void listAllMemories_test() {
+        MutableLiveData<List<MemoryEntity>> memoryLiveData = createLiveData(getMockMemories());
         when(memoryDao.selectAll()).thenReturn(memoryLiveData);
 
-        LiveData<List<TaggingEntity>> taggingLiveData = createLiveData(getMockTaggings());
-        when(taggingDao.selectAll()).thenReturn(taggingLiveData);
-
-        LiveData<List<TagEntity>> tagLiveData = createLiveData(getMockTags());
-        when(tagDao.selectAll()).thenReturn(tagLiveData);
-
-        repo.listMemories().observeForever(observer);
-        verify(observer).onChanged(memoryBuildCoordinator.includeMemories(getMockMemories()));
-        verify(observer).onChanged(memoryBuildCoordinator.includeTaggings(getMockTaggings()));
-        verify(observer).onChanged(memoryBuildCoordinator.includeTags(getMockTags()));
+        repo.listAllMemories().observeForever(selectionObserver);
+        verify(selectionObserver).onChanged(Resource.success(getMockMemories()));
     }
 
     @Test
-    public void listMemories_newMemoriesAdded_test() {
-        List<MemoryEntity> originalMemories = getMockMemories();
-        LiveData<List<MemoryEntity>> memoryLiveData = createLiveData(originalMemories);
+    public void listAllMemories_newMemoryAdded_test() {
+        List<MemoryEntity> memories = getMockMemories();
+        MemoryEntity newMemory = new MemoryEntity(100, "blah", "", 1000, "/p");
+        MutableLiveData<List<MemoryEntity>> memoryLiveData = createLiveData(getMockMemories());
+
         when(memoryDao.selectAll()).thenReturn(memoryLiveData);
+        memories.add(newMemory);
+        when(memoryDao.insert(any())).then(i -> updateMemoryLiveData(memoryLiveData, memories));
 
-        LiveData<List<TaggingEntity>> taggingLiveData = createLiveData(getMockTaggings());
-        when(taggingDao.selectAll()).thenReturn(taggingLiveData);
+        repo.listAllMemories().observeForever(selectionObserver);
+        verify(selectionObserver).onChanged(Resource.success(getMockMemories()));
 
-        LiveData<List<TagEntity>> tagLiveData = createLiveData(getMockTags());
-        when(tagDao.selectAll()).thenReturn(tagLiveData);
+        memoryDao.insert(Lists.newArrayList(memories));
+        verify(selectionObserver).onChanged(Resource.success(memories));
+    }
 
+    private List<Long> updateMemoryLiveData(MutableLiveData<List<MemoryEntity>> liveData, List<MemoryEntity> entities) {
+        liveData.postValue(entities);
+        return Lists.newArrayList();
+    }
 
+    @Test
+    public void addMemory_liveDataUpdated_test() {
+        MutableLiveData<List<MemoryEntity>> memoryLiveData = createLiveData(getMockMemories());
+
+        when(memoryDao.selectAll()).thenReturn(memoryLiveData);
+        when(memoryDao.insert(any())).thenReturn(Lists.newArrayList(20L));
+
+        repo.listAllMemories().observeForever(selectionObserver);
+        verify(selectionObserver).onChanged(Resource.success(getMockMemories()));
+
+        repo.addMemory(new MemoryEntity()).observeForever(additionObserver);
+        verify(additionObserver).onChanged(Resource.success(Lists.newArrayList(20L)));
+    }
+
+    @Test
+    public void addMemory_SQLiteConstraintExceptionThrown_test() {
+        when(memoryDao.insert(any())).thenThrow(new SQLiteConstraintException(""));
+        repo.addMemory(new MemoryEntity()).observeForever(additionObserver);
+
+        verify(additionObserver).onChanged(Resource.error("", Lists.newArrayList()));
+    }
+
+    @Test
+    public void removeMemories_test() {
+        int removeCount = 3;
+        when(memoryDao.delete(any())).thenReturn(removeCount);
+
+        repo.removeMemories(Lists.newArrayList()).observeForever(deletionObserver);
+        verify(deletionObserver).onChanged(Resource.success(removeCount));
+    }
+
+    @Test
+    public void removeMemories_throwSQLiteConstraintException_test() {
+        when(memoryDao.delete(any())).thenThrow(new SQLiteConstraintException(""));
+
+        repo.removeMemories(Lists.newArrayList()).observeForever(deletionObserver);
+        verify(deletionObserver).onChanged(Resource.error("", 0));
     }
 
     private static <T> MutableLiveData<List<T>>  createLiveData(List<T> entities) {

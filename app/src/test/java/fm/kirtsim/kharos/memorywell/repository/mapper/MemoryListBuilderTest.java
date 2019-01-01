@@ -7,8 +7,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import fm.kirtsim.kharos.memorywell.db.Resource;
-import fm.kirtsim.kharos.memorywell.db.Status;
 import fm.kirtsim.kharos.memorywell.db.entity.MemoryEntity;
 import fm.kirtsim.kharos.memorywell.db.entity.MemoryList;
 import fm.kirtsim.kharos.memorywell.db.entity.TagEntity;
@@ -19,7 +17,7 @@ import fm.kirtsim.kharos.memorywell.model.Tag;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertEquals;
 
-public final class MemoryListResourceBuilderTest {
+public final class MemoryListBuilderTest {
 
     private static final IMemoryEntityDataMapper memoryMapper = new MemoryEntityDataMapper();
     private static final ITagEntityDataMapper tagMapper = new TagEntityDataMapper();
@@ -43,11 +41,9 @@ public final class MemoryListResourceBuilderTest {
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        Resource<MemoryList> result=  buildCoordinator.includeMemories(entities);
+        MemoryList result=  buildCoordinator.includeMemories(entities).buildMemoryList();
 
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(expectedMemories, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(expectedMemories, result.memories);
     }
 
     @Test
@@ -63,11 +59,9 @@ public final class MemoryListResourceBuilderTest {
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        Resource<MemoryList> result=  buildCoordinator.includeMemories(memoryEntities);
+        MemoryList result=  buildCoordinator.includeMemories(memoryEntities).buildMemoryList();
 
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(expectedMemories, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(expectedMemories, result.memories);
     }
 
     @Test
@@ -84,11 +78,9 @@ public final class MemoryListResourceBuilderTest {
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        Resource<MemoryList> result=  buildCoordinator.includeMemories(memoryEntities);
+        MemoryList result=  buildCoordinator.includeMemories(memoryEntities).buildMemoryList();
 
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(expectedMemories, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(expectedMemories, result.memories);
     }
 
     @Test
@@ -109,11 +101,9 @@ public final class MemoryListResourceBuilderTest {
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1, tags),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        Resource<MemoryList> result=  buildCoordinator.includeMemories(memoryEntities);
+        MemoryList result =  buildCoordinator.includeMemories(memoryEntities).buildMemoryList();
 
-        assertEquals(Status.SUCCESS, result.status());
-        assertEquals(expectedMemories, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(expectedMemories, result.memories);
     }
 
 
@@ -127,11 +117,9 @@ public final class MemoryListResourceBuilderTest {
 
         final List<Memory> emptyList = Lists.newArrayList();
 
-        Resource<MemoryList> result=  buildCoordinator.includeTags(entities);
+        MemoryList result=  buildCoordinator.includeTags(entities).buildMemoryList();
 
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(emptyList, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(emptyList, result.memories);
     }
 
     @Test
@@ -142,17 +130,13 @@ public final class MemoryListResourceBuilderTest {
         buildCoordinator.includeMemories(memoryEntities);
 
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        Resource<MemoryList> result=  buildCoordinator.includeTags(tagEntities);
+        MemoryList result=  buildCoordinator.includeTags(tagEntities).buildMemoryList();
 
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-
-
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(expectedMemories, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(expectedMemories, result.memories);
     }
 
     @Test
@@ -163,11 +147,9 @@ public final class MemoryListResourceBuilderTest {
 
         final List<Memory> emptyList = Lists.newArrayList();
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        Resource<MemoryList> result=  buildCoordinator.includeTags(tagEntities);
+        MemoryList result=  buildCoordinator.includeTags(tagEntities).buildMemoryList();
 
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(emptyList, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(emptyList, result.memories);
     }
 
     @Test
@@ -182,16 +164,14 @@ public final class MemoryListResourceBuilderTest {
         buildCoordinator.includeTaggings(taggingEntities);
 
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        Resource<MemoryList> result = buildCoordinator.includeTags(tagEntities);
+        MemoryList result=  buildCoordinator.includeTags(tagEntities).buildMemoryList();
 
         List<Tag> tags = tagEntities.stream().map(tagMapper::mapEntity).collect(toList());
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1, tags),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        assertEquals(Status.SUCCESS, result.status());
-        assertEquals(expectedMemories, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(expectedMemories, result.memories);
     }
 
 
@@ -204,11 +184,9 @@ public final class MemoryListResourceBuilderTest {
 
         final List<Memory> emptyList = Lists.newArrayList();
 
-        Resource<MemoryList> result=  buildCoordinator.includeTaggings(entities);
+        MemoryList result=  buildCoordinator.includeTaggings(entities).buildMemoryList();
 
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(emptyList, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(emptyList, result.memories);
     }
 
     @Test
@@ -221,15 +199,13 @@ public final class MemoryListResourceBuilderTest {
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
 
-        Resource<MemoryList> result = buildCoordinator.includeTaggings(taggingEntities);
+        MemoryList result=  buildCoordinator.includeTaggings(taggingEntities).buildMemoryList();
 
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1,emptyList),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(expectedMemories, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(expectedMemories, result.memories);
     }
 
     @Test
@@ -240,11 +216,9 @@ public final class MemoryListResourceBuilderTest {
 
         final List<Memory> emptyList = Lists.newArrayList();
         List<TagEntity> tagEntities = Lists.newArrayList(new TagEntity(1, "1" ), new TagEntity(2, "2"));
-        Resource<MemoryList> result =  buildCoordinator.includeTags(tagEntities);
+        MemoryList result=  buildCoordinator.includeTags(tagEntities).buildMemoryList();
 
-        assertEquals(Status.LOADING, result.status());
-        assertEquals(emptyList, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(emptyList, result.memories);
     }
 
     @Test
@@ -259,16 +233,14 @@ public final class MemoryListResourceBuilderTest {
 
         List<TaggingEntity> taggingEntities = Lists.newArrayList(new TaggingEntity(1, 1 ),
                 new TaggingEntity(1, 2));
-        Resource<MemoryList> result = buildCoordinator.includeTaggings(taggingEntities);
+        MemoryList result = buildCoordinator.includeTaggings(taggingEntities).buildMemoryList();
 
         List<Tag> tags = tagEntities.stream().map(tagMapper::mapEntity).collect(toList());
         final List<Tag> emptyList = Lists.newArrayList();
         List<Memory> expectedMemories = Lists.newArrayList(memoryMapper.mapEntity(entity1, tags),
                 memoryMapper.mapEntity(entity2, emptyList));
 
-        assertEquals(Status.SUCCESS, result.status());
-        assertEquals(expectedMemories, result.data().memories);
-        assertEquals("", result.message());
+        assertEquals(expectedMemories, result.memories);
     }
 
 

@@ -9,7 +9,7 @@ public class Resource<Data> {
     private Resource(Status status, Data data, String message) {
         this.status = status;
         this.data = data;
-        this.message = message;
+        this.message = emptyStringIfMessageIsNull(message);
     }
 
     public Status status() {
@@ -36,6 +36,12 @@ public class Resource<Data> {
         return new Resource<>(Status.LOADING, data, "");
     }
 
+    private String emptyStringIfMessageIsNull(String message) {
+        if (message == null)
+            return "";
+        return message;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Resource))
@@ -49,7 +55,7 @@ public class Resource<Data> {
             return false;
         }
 
-        return other.message.equals(message)&&
+        return this.message.equals(other.message)&&
                 other.status == status &&
                 data.equals(other.data);
     }
