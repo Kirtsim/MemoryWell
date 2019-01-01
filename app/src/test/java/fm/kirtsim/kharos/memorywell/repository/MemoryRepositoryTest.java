@@ -1,6 +1,7 @@
 package fm.kirtsim.kharos.memorywell.repository;
 
 import android.arch.core.executor.testing.InstantTaskExecutorRule;
+import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
 import android.database.sqlite.SQLiteConstraintException;
@@ -28,6 +29,7 @@ import fm.kirtsim.kharos.memorywell.repository.mapper.TagEntityDataMapper;
 
 import static fmShared.kirtsim.kharos.memorywell.db.mock.MemoryEntityMocks.getMockMemories;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -79,6 +81,15 @@ public final class MemoryRepositoryTest {
 
         memoryDao.insert(Lists.newArrayList(memories));
         verify(selectionObserver).onChanged(Resource.success(memories));
+    }
+
+    @Test
+    public void listMemoriesWithinTimeRange_test() {
+        LiveData<List<MemoryEntity>> liveData = createLiveData(Lists.newArrayList());
+        when(memoryDao.selectByTimeRange(anyLong(), anyLong())).thenReturn(liveData);
+
+        repo.listMemoriesWithinTimeRange(1, 2).observeForever(selectionObserver);
+        verify(selectionObserver).onChanged(Resource.success(Lists.newArrayList()));
     }
 
     private List<Long> updateMemoryLiveData(MutableLiveData<List<MemoryEntity>> liveData, List<MemoryEntity> entities) {
