@@ -24,6 +24,8 @@ import fm.kirtsim.kharos.memorywell.db.entity.TagEntity;
 
 import static fmShared.kirtsim.kharos.memorywell.db.mock.TagEntityMocks.getMockTags;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -76,6 +78,24 @@ public class TagRepositoryTest {
     private List<Long> updateMemoryLiveData(MutableLiveData<List<TagEntity>> liveData, List<TagEntity> entities) {
         liveData.postValue(entities);
         return Lists.newArrayList();
+    }
+
+    @Test
+    public void listTagsWithPrefix_test() {
+        MutableLiveData<List<TagEntity>> memoryLiveData = createLiveData(getMockTags());
+
+        when(tagDao.selectTagsWithNamesStarting(anyString())).thenReturn(memoryLiveData);
+        repo.listTagsWithPrefix("blah");
+        verify(selectionObserver).onChanged(Resource.success(getMockTags()));
+    }
+
+    @Test
+    public void listTagsForMemoryId_test() {
+        MutableLiveData<List<TagEntity>> memoryLiveData = createLiveData(getMockTags());
+
+        when(tagDao.selectByMemoryId(anyLong())).thenReturn(memoryLiveData);
+        repo.listTagsForMemoryId(3);
+        verify(selectionObserver).onChanged(Resource.success(getMockTags()));
     }
 
     @Test
