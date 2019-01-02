@@ -6,6 +6,8 @@ import java.util.List;
 
 import fm.kirtsim.kharos.memorywell.db.entity.TagEntity;
 
+import static java.util.stream.Collectors.toList;
+
 public final class TagEntityMocks {
 
     private static final List<TagEntity> tags = Lists.newArrayList(
@@ -44,6 +46,11 @@ public final class TagEntityMocks {
         tag.name = uniqueTag.name;
 
         return uniqueTag.name.substring(0,3);
+    }
+
+    public static List<TagEntity> getTagsWithIds(List<Long> ids) {
+        return tags.stream().filter(e -> ids.contains(e.id))
+                .map(e -> new TagEntity(e.id, e.name)).collect(toList());
     }
 
     public static String missingTagPrefix() {

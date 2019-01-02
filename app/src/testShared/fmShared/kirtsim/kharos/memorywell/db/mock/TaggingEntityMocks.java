@@ -92,6 +92,17 @@ public final class TaggingEntityMocks {
         List<Long> allTagIds = TagEntityMocks.getMockTags().stream().map(t -> t.id).collect(toList());
 
         return allTagIds.stream().filter(boundIds::contains).collect(toList());
+    }
 
+    public static List<TaggingEntity> getListOfTaggingsWithCommonMemoryIdForTesting() {
+        Holder taggingHolder = taggings.get(0);
+        List<TaggingEntity> taggings = Lists.newArrayList();
+
+        for (Long tagId : taggingHolder.tagIds)
+            taggings.add(new TaggingEntity(taggingHolder.memoryId, tagId));
+
+        if (taggings.size() < 2)
+            throw new RuntimeException("Expected number of taggings for a single memory ID must be greater than 1");
+        return taggings;
     }
 }

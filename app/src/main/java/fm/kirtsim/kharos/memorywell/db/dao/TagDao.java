@@ -30,6 +30,9 @@ public interface TagDao {
     @Query("select * from TagEntity where id in (:ids)")
     LiveData<List<TagEntity>> selectByIds(List<Long> ids);
 
+    @Query("select distinct id, name from TagEntity join TaggingEntity on(id=tagId) where memoryId = :memoryId")
+    LiveData<List<TagEntity>> selectByMemoryId(long memoryId);
+
     @Query("select * from TagEntity where lower(name) in (:tagNames)")
     LiveData<List<TagEntity>> selectByNames(List<String> tagNames);
 

@@ -22,6 +22,7 @@ import fm.kirtsim.kharos.memorywell.db.entity.TaggingEntity;
 import fmShared.kirtsim.kharos.memorywell.db.mock.TagEntityMocks;
 import fmShared.kirtsim.kharos.memorywell.db.mock.TaggingEntityMocks;
 
+import static fmShared.kirtsim.kharos.memorywell.db.util.DebugUtil.setInMemoryRoomDatabases;
 import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_DB_DELETE_COUNT;
 import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_DB_UPDATE_COUNT;
 import static fmShared.kirtsim.kharos.memorywell.util.AssertUtil.ERR_NO_EXCEPTION;
@@ -110,6 +111,21 @@ public final class TagDaoTest {
         selected = selected.stream().filter(tag -> tag.id > -1).collect(toList());
 
         assertTagListsEqual(expected, selected);
+    }
+
+    @Test
+    public void selectByTagId_test() {
+        setInMemoryRoomDatabases(db);
+        List<TaggingEntity> testTaggings = TaggingEntityMocks.getListOfTaggingsWithCommonMemoryIdForTesting();
+        List<TagEntity> expected = convertTaggingsToTags(testTaggings);
+
+        List<TagEntity> selected = getValue(tagDao.selectByMemoryId(testTaggings.get(0).memoryId));
+
+        assertTagListsEqual(expected, selected);
+    }
+
+    private List<TagEntity> convertTaggingsToTags(List<TaggingEntity> taggings) {
+        return TagEntityMocks.getTagsWithIds(taggings.stream().map(t -> t.tagId).collect(toList()));
     }
 
     @Test
